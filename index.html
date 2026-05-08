@@ -1228,20 +1228,7 @@
       color: #fff;
       border-color: var(--accent);
     }
-
-  
-    .remaining-reward-list li {
-      background: #f8fafc;
-      border: 1px solid var(--line);
-      border-left: 4px solid var(--accent);
-      border-radius: 14px;
-      padding: 11px 12px;
-      margin: 10px 0;
-      list-style-position: inside;
-      white-space: pre-line;
-    }
-
-  </style>
+</style>
 </head>
 
 <body>
@@ -1548,18 +1535,7 @@
             가치는 머릿속 개념으로만 남지 않고, 오늘의 작은 행동을 통해 조금씩 몸으로 내려옵니다.
           </div>
         </div>
-
-        <div class="card">
-          <h2 id="trophySentencesTitle">선택한 날짜에 남은 보상 문장</h2>
-          <ol class="trophy-sentences remaining-reward-list" id="trophySentences">
-            <li>아직 기록이 없습니다.</li>
-          </ol>
-          <div class="hint">
-            앱이 새로 만든 문장이 아니라, 실제 저장된 기록 안에 남아 있는 보상 문장입니다.
-          </div>
-        </div>
-
-        <div class="card">
+<div class="card">
           <h2>하루 마무리 질문</h2>
           <label for="dailyReflection" id="dailyReflectionLabel">선택한 날짜에 나를 살린 가장 작은 행동은 무엇이었나요?</label>
           <textarea id="dailyReflection" placeholder="짧게 한 문장만 적어도 충분합니다. 예: 밥을 챙겨 먹었다."></textarea>
@@ -1657,7 +1633,7 @@
 
         <div class="card">
           <h2>PWA 설치 상태</h2>
-          <p class="small"><strong>현재 버전: v13.1</strong></p>
+          <p class="small"><strong>현재 버전: v14</strong></p>
           <p class="small" id="pwaStatus">설치 상태를 확인 중입니다.</p>
           <div class="row">
             <button class="btn" id="installBtn" disabled>앱 설치하기</button>
@@ -1857,7 +1833,6 @@
       if ($("trophyCenterTitle")) $("trophyCenterTitle").textContent = `${dayLabel}의 중심 행동`;
       if ($("timeBucketTitle")) $("timeBucketTitle").textContent = `${dayLabel}의 시간대 요약`;
       if ($("valueMapTitle")) $("valueMapTitle").textContent = `${shortLabel} 행동으로 살아난 가치`;
-      if ($("trophySentencesTitle")) $("trophySentencesTitle").textContent = `${dayLabel} 남은 보상 문장`;
       if ($("dailyReflectionLabel")) $("dailyReflectionLabel").textContent = `${dayLabel} 나를 살린 가장 작은 행동은 무엇이었나요?`;
     }
 
@@ -2911,7 +2886,7 @@ ${record.rewardSentence || "기록 없음"}
         $("trophySubtitle").textContent = `첫 기록 하나가 생기면 이곳에 ${dayLabel}의 회복 트로피가 만들어집니다.`;
         $("trophyDetail").textContent = `${dayLabel}의 기록이 아직 없습니다.`;
         $("trophyValueMap").innerHTML = `<div class="empty">${dayLabel} 접촉한 가치가 아직 없습니다.</div>`;
-        $("trophySentences").innerHTML = `<li>${dayLabel} 아직 남은 보상 문장이 없습니다. 첫 기록 하나가 생기면 이곳에 남습니다.</li>`;
+        if ($("trophySentences")) $("trophySentences").innerHTML = `<li>${dayLabel} 아직 남은 보상 문장이 없습니다. 첫 기록 하나가 생기면 이곳에 남습니다.</li>`;
         renderTrophyHighlights([]);
         renderTimeBuckets([]);
         renderReflectionDisplay(reflection);
@@ -2947,7 +2922,6 @@ ${record.rewardSentence || "기록 없음"}
       renderTrophyHighlights(records);
       renderTimeBuckets(records);
       renderReflectionDisplay(reflection);
-      renderTrophySentences(records, totalSec, mostValue, longest, reflection);
     }
 
 
@@ -3027,29 +3001,7 @@ ${record.rewardSentence || "기록 없음"}
       });
     }
 
-    function renderTrophySentences(records, totalSec, mostValue, longest, reflection) {
-      const list = $("trophySentences");
-      if (!list) return;
-
-      const dayLabel = getSelectedDayShortLabel ? getSelectedDayShortLabel() : "오늘";
-
-      if (!records || records.length === 0) {
-        list.innerHTML = `<li>${dayLabel} 아직 남은 보상 문장이 없습니다. 첫 기록 하나가 생기면 이곳에 남습니다.</li>`;
-        return;
-      }
-
-      const picked = pickRepresentativeRewardSentences(records);
-
-      if (picked.length === 0) {
-        list.innerHTML = `<li>${dayLabel} 기록은 있지만 저장된 보상 문장이 아직 없습니다.</li>`;
-        return;
-      }
-
-      list.innerHTML = picked.map((item) => {
-        const meta = `${formatTimeOnly(item.record.startAt)} · ${item.record.actionText} · ${formatDurationShort(item.record.durationSec)}`;
-        return `<li><strong>${escapeHtml(meta)}</strong><br>${escapeHtml(item.sentence)}</li>`;
-      }).join("");
-    }
+    
 
     function buildTrophyPrompt() {
       const records = getTodayRecords();
@@ -3433,42 +3385,9 @@ ${recordLines || "기록 없음"}
       renderAll();
     }
 
-    function pickRepresentativeRewardSentences(records) {
-          const candidates = records
-            .filter((record) => record && record.rewardSentence)
-            .map((record) => ({
-              record,
-              sentence: normalizeRewardSentence(record.rewardSentence || "")
-            }))
-            .filter((item) => item.sentence.length > 0);
+    
 
-          if (candidates.length === 0) return [];
-
-          const selected = [];
-          const addUnique = (item) => {
-            if (!item) return;
-            const key = item.record.id || `${item.record.startAt}-${item.record.actionText}`;
-            if (selected.some((x) => (x.record.id || `${x.record.startAt}-${x.record.actionText}`) === key)) return;
-            selected.push(item);
-          };
-
-          // 1. 가장 오래 남은 행동
-          addUnique([...candidates].sort((a, b) => (b.record.durationSec || 0) - (a.record.durationSec || 0))[0]);
-
-          // 2. 가장 짧지만 남은 행동
-          addUnique([...candidates].sort((a, b) => (a.record.durationSec || 0) - (b.record.durationSec || 0))[0]);
-
-          // 3. 가장 최근 기록
-          addUnique([...candidates].sort((a, b) => new Date(b.record.startAt) - new Date(a.record.startAt))[0]);
-
-          return selected.slice(0, 3);
-        }
-
-    function normalizeRewardSentence(text) {
-          return String(text || "")
-            .replace(/\n{3,}/g, "\n\n")
-            .trim();
-        }
+    
 
     init();
   </script>
