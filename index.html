@@ -866,6 +866,75 @@
       text-align: left;
     }
 
+  
+    .date-nav-card {
+      background:
+        radial-gradient(circle at top left, rgba(31,95,91,0.10), transparent 36%),
+        #ffffff;
+    }
+
+    .date-nav-top {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .date-center {
+      text-align: center;
+      min-width: 0;
+    }
+
+    .date-kicker {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 900;
+      margin-bottom: 2px;
+    }
+
+    .selected-date-title {
+      color: var(--accent);
+      font-size: clamp(20px, 4.5vw, 30px);
+      font-weight: 950;
+      letter-spacing: -0.04em;
+      line-height: 1.18;
+      word-break: keep-all;
+    }
+
+    .date-nav-bottom {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      margin-top: 10px;
+      align-items: center;
+    }
+
+    .selected-date-input {
+      min-width: 0;
+    }
+
+    @media (max-width: 680px) {
+      .date-nav-top {
+        grid-template-columns: 1fr 1fr;
+      }
+      .date-center {
+        grid-column: 1 / -1;
+        grid-row: 1;
+        margin-bottom: 4px;
+      }
+      .date-prev {
+        grid-column: 1;
+        grid-row: 2;
+      }
+      .date-next {
+        grid-column: 2;
+        grid-row: 2;
+      }
+      .date-nav-bottom {
+        grid-template-columns: 1fr;
+      }
+    }
+
   </style>
 </head>
 
@@ -994,8 +1063,27 @@
           안드로이드 Chrome에서 설치 가능 상태가 되면 이곳에 설치 버튼이 나타납니다.
         </div>
 
+        <div class="card date-nav-card">
+          <div class="date-nav-top">
+            <button class="btn secondary date-prev" type="button">〈 이전날</button>
+            <div class="date-center">
+              <div class="date-kicker">선택한 날짜</div>
+              <div class="selected-date-title">-</div>
+            </div>
+            <button class="btn secondary date-next" type="button">다음날 〉</button>
+          </div>
+          <div class="date-nav-bottom">
+            <input class="selected-date-input" type="date" />
+            <button class="btn secondary date-today" type="button">오늘로 이동</button>
+          </div>
+          <div class="hint">
+            오늘뿐 아니라 지난 날짜의 회복 기록과 트로피도 다시 볼 수 있습니다.
+          </div>
+        </div>
+
+
         <div class="card">
-          <h2>오늘의 회복 대시보드</h2>
+          <h2 id="dashboardTitle">선택한 날짜의 회복 대시보드</h2>
           <div class="stats-grid">
             <div class="stat">
               <div class="num" id="todayCount">0</div>
@@ -1057,15 +1145,35 @@
         </div>
 
         <div class="card">
-          <h2>오늘 기록 목록</h2>
+          <h2 id="selectedRecordListTitle">선택한 날짜 기록 목록</h2>
           <div id="todayList"></div>
         </div>
       </section>
 
 
       <section id="trophyTab" class="hidden">
+
+        <div class="card date-nav-card">
+          <div class="date-nav-top">
+            <button class="btn secondary date-prev" type="button">〈 이전날</button>
+            <div class="date-center">
+              <div class="date-kicker">선택한 날짜</div>
+              <div class="selected-date-title">-</div>
+            </div>
+            <button class="btn secondary date-next" type="button">다음날 〉</button>
+          </div>
+          <div class="date-nav-bottom">
+            <input class="selected-date-input" type="date" />
+            <button class="btn secondary date-today" type="button">오늘로 이동</button>
+          </div>
+          <div class="hint">
+            오늘뿐 아니라 지난 날짜의 회복 기록과 트로피도 다시 볼 수 있습니다.
+          </div>
+        </div>
+
+
         <div class="card trophy-hero">
-          <div class="trophy-kicker">오늘의 회복 트로피</div>
+          <div class="trophy-kicker" id="trophyKicker">선택한 날짜의 회복 트로피</div>
           <h2 id="trophyTitle">오늘의 작은 행동이 아직 기록되지 않았습니다.</h2>
           <p id="trophySubtitle" class="trophy-subtitle">
             첫 기록 하나가 생기면 이곳에 오늘의 회복 트로피가 만들어집니다.
@@ -1074,7 +1182,7 @@
         </div>
 
         <div class="card">
-          <h2>오늘의 보상 요약</h2>
+          <h2 id="trophySummaryTitle">선택한 날짜의 보상 요약</h2>
           <div class="trophy-grid">
             <div class="trophy-metric">
               <div class="trophy-num" id="trophySessionCount">0</div>
@@ -1097,7 +1205,7 @@
 
 
         <div class="card">
-          <h2>오늘의 중심 행동</h2>
+          <h2 id="trophyCenterTitle">선택한 날짜의 중심 행동</h2>
           <div class="summary-two-col">
             <div class="summary-highlight">
               <div class="summary-kicker">가장 오래 남은 행동</div>
@@ -1113,13 +1221,13 @@
         </div>
 
         <div class="card">
-          <h2>오늘의 시간대 요약</h2>
+          <h2 id="timeBucketTitle">선택한 날짜의 시간대 요약</h2>
           <div class="time-bucket-grid" id="timeBucketGrid"></div>
           <div class="hint">시간대 요약은 평가가 아니라 패턴 관찰입니다. 비어 있는 시간대는 실패가 아니라 여백입니다.</div>
         </div>
 
         <div class="card">
-          <h2>오늘 행동으로 살아난 가치</h2>
+          <h2 id="valueMapTitle">선택한 날짜에 행동으로 살아난 가치</h2>
           <div id="trophyValueMap" class="value-map"></div>
           <div class="hint">
             가치는 머릿속 개념으로만 남지 않고, 오늘의 작은 행동을 통해 조금씩 몸으로 내려옵니다.
@@ -1127,7 +1235,7 @@
         </div>
 
         <div class="card">
-          <h2>오늘의 회복 문장 3개</h2>
+          <h2 id="trophySentencesTitle">선택한 날짜의 회복 문장 3개</h2>
           <ol class="trophy-sentences" id="trophySentences">
             <li>아직 기록이 없습니다.</li>
           </ol>
@@ -1135,7 +1243,7 @@
 
         <div class="card">
           <h2>하루 마무리 질문</h2>
-          <label for="dailyReflection">오늘 나를 살린 가장 작은 행동은 무엇이었나요?</label>
+          <label for="dailyReflection" id="dailyReflectionLabel">선택한 날짜에 나를 살린 가장 작은 행동은 무엇이었나요?</label>
           <textarea id="dailyReflection" placeholder="짧게 한 문장만 적어도 충분합니다. 예: 밥을 챙겨 먹었다."></textarea>
           <div class="reflection-card" id="reflectionDisplay">아직 저장된 마무리 문장이 없습니다.</div>
           <div class="row">
@@ -1260,6 +1368,7 @@
     let timerInterval = null;
     let deferredInstallPrompt = null;
     let timelineScale = Number(localStorage.getItem("minwoo_timeline_scale_v1")) || 10;
+    let selectedDateKey = localStorage.getItem("recovery_selected_date_v1") || getTodayKey();
 
     const $ = (id) => document.getElementById(id);
 
@@ -1311,6 +1420,70 @@
     function parseTodayKey(iso) {
       return getTodayKey(new Date(iso));
     }
+
+    function dateKeyToDate(dateKey) {
+      return new Date(`${dateKey}T00:00:00`);
+    }
+
+    function isSelectedToday() {
+      return selectedDateKey === getTodayKey();
+    }
+
+    function getSelectedDayLabel() {
+      return isSelectedToday() ? "오늘" : "선택한 날짜";
+    }
+
+    function getSelectedDayShortLabel() {
+      return isSelectedToday() ? "오늘" : "이날";
+    }
+
+    function formatDateKeyHuman(dateKey) {
+      const date = dateKeyToDate(dateKey);
+      return new Intl.DateTimeFormat("ko-KR", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        weekday: "long"
+      }).format(date);
+    }
+
+    function setSelectedDate(dateKey, silent = false) {
+      if (!dateKey) return;
+      selectedDateKey = dateKey;
+      localStorage.setItem("recovery_selected_date_v1", selectedDateKey);
+      updateDateControls();
+      renderAll();
+      if (!silent) showToast(`${formatDateKeyHuman(selectedDateKey)} 기록을 보고 있습니다`);
+    }
+
+    function shiftSelectedDate(days) {
+      const date = dateKeyToDate(selectedDateKey);
+      date.setDate(date.getDate() + days);
+      setSelectedDate(getTodayKey(date));
+    }
+
+    function updateDateControls() {
+      document.querySelectorAll(".selected-date-input").forEach((input) => {
+        input.value = selectedDateKey;
+      });
+      document.querySelectorAll(".selected-date-title").forEach((el) => {
+        el.textContent = formatDateKeyHuman(selectedDateKey);
+      });
+
+      const dayLabel = getSelectedDayLabel();
+      const shortLabel = getSelectedDayShortLabel();
+
+      if ($("dashboardTitle")) $("dashboardTitle").textContent = `${dayLabel}의 회복 대시보드`;
+      if ($("selectedRecordListTitle")) $("selectedRecordListTitle").textContent = `${dayLabel} 기록 목록`;
+      if ($("trophyKicker")) $("trophyKicker").textContent = `${dayLabel}의 회복 트로피`;
+      if ($("trophySummaryTitle")) $("trophySummaryTitle").textContent = `${dayLabel}의 보상 요약`;
+      if ($("trophyCenterTitle")) $("trophyCenterTitle").textContent = `${dayLabel}의 중심 행동`;
+      if ($("timeBucketTitle")) $("timeBucketTitle").textContent = `${dayLabel}의 시간대 요약`;
+      if ($("valueMapTitle")) $("valueMapTitle").textContent = `${shortLabel} 행동으로 살아난 가치`;
+      if ($("trophySentencesTitle")) $("trophySentencesTitle").textContent = `${dayLabel}의 회복 문장 3개`;
+      if ($("dailyReflectionLabel")) $("dailyReflectionLabel").textContent = `${dayLabel} 나를 살린 가장 작은 행동은 무엇이었나요?`;
+    }
+
 
     function minutesSinceMidnight(iso) {
       const d = new Date(iso);
@@ -1823,12 +1996,16 @@ ${record.trophySentence || "기록 없음"}
       records.unshift(record);
       saveRecords(records);
 
+      selectedDateKey = record.dateKey || parseTodayKey(record.startAt);
+      localStorage.setItem("recovery_selected_date_v1", selectedDateKey);
+
       activeSession = null;
       pendingEnd = null;
       clearActive();
 
       resetStartFormSoft();
       showIdleView();
+      updateDateControls();
       renderAll();
       showToast("회복 기록이 저장되었습니다");
       switchTab("today");
@@ -1859,9 +2036,8 @@ ${record.trophySentence || "기록 없음"}
     }
 
     function getTodayRecords() {
-      const today = getTodayKey();
       return loadRecords()
-        .filter((r) => parseTodayKey(r.startAt) === today)
+        .filter((r) => parseTodayKey(r.startAt) === selectedDateKey)
         .sort((a, b) => new Date(a.startAt) - new Date(b.startAt));
     }
 
@@ -1875,12 +2051,14 @@ ${record.trophySentence || "기록 없음"}
       $("todayReturn").textContent = Math.max(0, todayRecords.length - 1);
       $("todayValuesCount").textContent = values.length;
 
+      const dayLabel = getSelectedDayShortLabel();
+
       if (todayRecords.length === 0) {
-        $("todaySentence").textContent = "오늘의 작은 행동이 아직 기록되지 않았습니다. 첫 30초도 충분히 기록이 됩니다.";
+        $("todaySentence").textContent = `${dayLabel}의 작은 행동 기록이 아직 없습니다. 첫 30초도 충분히 기록이 됩니다.`;
       } else if (todayRecords.length === 1) {
-        $("todaySentence").textContent = "오늘 나는 1번 삶의 방향으로 돌아왔다.";
+        $("todaySentence").textContent = `${dayLabel} 나는 1번 삶의 방향으로 돌아왔다.`;
       } else {
-        $("todaySentence").textContent = `오늘 나는 ${todayRecords.length}번 삶의 방향으로 돌아왔다. 끊김보다 중요한 것은 다시 시작한 흔적이다.`;
+        $("todaySentence").textContent = `${dayLabel} 나는 ${todayRecords.length}번 삶의 방향으로 돌아왔다. 끊김보다 중요한 것은 다시 시작한 흔적이다.`;
       }
 
       renderDaybar(todayRecords);
@@ -1909,12 +2087,14 @@ ${record.trophySentence || "기록 없음"}
       const bar = $("daybar");
       bar.innerHTML = "";
 
-      const now = new Date();
-      const nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
-      const nowLine = document.createElement("div");
-      nowLine.className = "now-line";
-      nowLine.style.left = `${Math.min(100, Math.max(0, nowMin / 1440 * 100))}%`;
-      bar.appendChild(nowLine);
+      if (isSelectedToday()) {
+        const now = new Date();
+        const nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+        const nowLine = document.createElement("div");
+        nowLine.className = "now-line";
+        nowLine.style.left = `${Math.min(100, Math.max(0, nowMin / 1440 * 100))}%`;
+        bar.appendChild(nowLine);
+      }
 
       records.forEach((record) => {
         const start = minutesSinceMidnight(record.startAt);
@@ -1964,12 +2144,14 @@ ${record.trophySentence || "기록 없음"}
         }
       }
 
-      const now = new Date();
-      const nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
-      const nowMarker = document.createElement("div");
-      nowMarker.className = "now-marker";
-      nowMarker.style.top = `${nowMin * scale}px`;
-      timeline.appendChild(nowMarker);
+      if (isSelectedToday()) {
+        const now = new Date();
+        const nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+        const nowMarker = document.createElement("div");
+        nowMarker.className = "now-marker";
+        nowMarker.style.top = `${nowMin * scale}px`;
+        timeline.appendChild(nowMarker);
+      }
 
       records.forEach((record) => {
         const start = minutesSinceMidnight(record.startAt);
@@ -2016,6 +2198,9 @@ ${record.trophySentence || "기록 없음"}
     }
 
     function jumpToNow() {
+      if (!isSelectedToday()) {
+        setSelectedDate(getTodayKey(), true);
+      }
       const now = new Date();
       const nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
       scrollTimelineToMinute(nowMin);
@@ -2080,7 +2265,7 @@ ${record.trophySentence || "기록 없음"}
     }
 
     function getReflectionKey() {
-      return `${REFLECTION_KEY}_${getTodayKey()}`;
+      return `${REFLECTION_KEY}_${selectedDateKey}`;
     }
 
     function saveDailyReflection() {
@@ -2102,6 +2287,7 @@ ${record.trophySentence || "기록 없음"}
       const values = Object.keys(valueCounts);
       const longest = getLongestRecord(records);
       const reflection = localStorage.getItem(getReflectionKey()) || "";
+      const dayLabel = getSelectedDayShortLabel();
 
       if ($("dailyReflection")) $("dailyReflection").value = reflection;
 
@@ -2110,11 +2296,11 @@ ${record.trophySentence || "기록 없음"}
       $("trophyValueCount").textContent = values.length;
 
       if (records.length === 0) {
-        $("trophyTitle").textContent = "오늘의 작은 행동이 아직 기록되지 않았습니다.";
-        $("trophySubtitle").textContent = "첫 기록 하나가 생기면 이곳에 오늘의 회복 트로피가 만들어집니다.";
-        $("trophyDetail").textContent = "오늘의 기록이 아직 없습니다.";
-        $("trophyValueMap").innerHTML = `<div class="empty">오늘 접촉한 가치가 아직 없습니다.</div>`;
-        $("trophySentences").innerHTML = `<li>첫 30초의 시작도 충분히 오늘의 트로피가 될 수 있습니다.</li>`;
+        $("trophyTitle").textContent = `${dayLabel}의 작은 행동 기록이 아직 없습니다.`;
+        $("trophySubtitle").textContent = `첫 기록 하나가 생기면 이곳에 ${dayLabel}의 회복 트로피가 만들어집니다.`;
+        $("trophyDetail").textContent = `${dayLabel}의 기록이 아직 없습니다.`;
+        $("trophyValueMap").innerHTML = `<div class="empty">${dayLabel} 접촉한 가치가 아직 없습니다.</div>`;
+        $("trophySentences").innerHTML = `<li>첫 30초의 시작도 충분히 ${dayLabel}의 트로피가 될 수 있습니다.</li>`;
         renderTrophyHighlights([]);
         renderTimeBuckets([]);
         renderReflectionDisplay(reflection);
@@ -2123,15 +2309,15 @@ ${record.trophySentence || "기록 없음"}
 
       const mostValue = values.sort((a, b) => valueCounts[b] - valueCounts[a])[0];
       const title = records.length === 1
-        ? "오늘 나는 1번 삶의 방향으로 돌아왔다."
-        : `오늘 나는 ${records.length}번 삶의 방향으로 돌아왔다.`;
+        ? `${dayLabel} 나는 1번 삶의 방향으로 돌아왔다.`
+        : `${dayLabel} 나는 ${records.length}번 삶의 방향으로 돌아왔다.`;
 
       $("trophyTitle").textContent = title;
 
       const subtitleLines = [
         `${formatDurationShort(totalSec)}의 시간이 사라지지 않고 회복 기록으로 남았습니다.`,
         values.length ? `오늘 행동으로 접촉한 가치는 ${values.join(", ")}입니다.` : "",
-        reflection ? `오늘의 마무리 문장: ${reflection}` : "오늘을 평가하지 않고, 남은 흔적을 회수하는 시간입니다."
+        reflection ? `${dayLabel}의 마무리 문장: ${reflection}` : `${dayLabel}을 평가하지 않고, 남은 흔적을 회수하는 시간입니다.`
       ].filter(Boolean);
 
       $("trophySubtitle").textContent = subtitleLines.join("\n");
@@ -2140,7 +2326,7 @@ ${record.trophySentence || "기록 없음"}
         `총 ${records.length}개의 회복 세션이 남았습니다.`,
         `총 시간은 ${formatDurationShort(totalSec)}입니다.`,
         longest ? `가장 오래 남은 행동은 '${longest.actionText}' (${formatDurationShort(longest.durationSec)})입니다.` : "",
-        mostValue ? `오늘 가장 자주 살아난 가치는 '${mostValue}'입니다.` : "",
+        mostValue ? `${dayLabel} 가장 자주 살아난 가치는 '${mostValue}'입니다.` : "",
         `다시 시작한 횟수는 ${Math.max(0, records.length - 1)}회로 기록됩니다.`
       ].filter(Boolean);
 
@@ -2235,20 +2421,21 @@ ${record.trophySentence || "기록 없음"}
       const count = records.length;
       const longestText = longest ? `'${longest.actionText}'` : "작은 행동";
 
+      const dayLabel = getSelectedDayShortLabel();
       const sentences = [
         count === 1
-          ? "오늘 나는 한 번이라도 삶의 방향으로 돌아왔고, 그 한 번은 사라지지 않고 기록으로 남았다."
-          : `오늘 나는 ${count}번 삶의 방향으로 돌아왔고, 끊김보다 다시 시작한 흔적을 남겼다.`,
+          ? `${dayLabel} 나는 한 번이라도 삶의 방향으로 돌아왔고, 그 한 번은 사라지지 않고 기록으로 남았다.`
+          : `${dayLabel} 나는 ${count}번 삶의 방향으로 돌아왔고, 끊김보다 다시 시작한 흔적을 남겼다.`,
         mostValue
-          ? `오늘 ${mostValue}이라는 가치는 생각이 아니라 실제 행동으로 한 번 이상 몸을 통과했다.`
-          : "오늘의 가치는 아직 더 천천히 이름 붙여도 괜찮다.",
-        `${formatDurationShort(totalSec)}는 과장할 필요도, 하찮게 볼 필요도 없는 오늘의 정확한 회복 시간이다.`,
+          ? `${dayLabel} ${mostValue}이라는 가치는 생각이 아니라 실제 행동으로 한 번 이상 몸을 통과했다.`
+          : `${dayLabel}의 가치는 아직 더 천천히 이름 붙여도 괜찮다.`,
+        `${formatDurationShort(totalSec)}는 과장할 필요도, 하찮게 볼 필요도 없는 ${dayLabel}의 정확한 회복 시간이다.`,
         longest
-          ? `가장 오래 남은 행동은 ${longestText}이고, 이 행동은 오늘의 작은 중심점이 되었다.`
+          ? `가장 오래 남은 행동은 ${longestText}이고, 이 행동은 ${dayLabel}의 작은 중심점이 되었다.`
           : "아직 가장 오래 남은 행동은 없다.",
         reflection
-          ? `오늘 내가 직접 남긴 문장도 트로피의 일부다: “${reflection}”`
-          : "오늘의 마무리 문장은 비워두어도 괜찮다. 비어 있음도 오늘의 여백으로 남는다."
+          ? `${dayLabel} 내가 직접 남긴 문장도 트로피의 일부다: “${reflection}”`
+          : `${dayLabel}의 마무리 문장은 비워두어도 괜찮다. 비어 있음도 ${dayLabel}의 여백으로 남는다.`
       ];
 
       list.innerHTML = sentences.slice(0, 3).map((s) => `<li>${escapeHtml(s)}</li>`).join("");
@@ -2274,6 +2461,9 @@ ${record.trophySentence || "기록 없음"}
 - 핵심은 '작은 행동이 사라지지 않고 회복의 증거로 남았다'는 감각입니다.
 - 자기비난을 줄이고, 내일 다시 시작할 수 있는 감각을 살려주세요.
 - 5~8문장 정도로 하루 마무리 보상 문장을 만들어주세요.
+
+선택한 날짜:
+- 날짜: ${formatDateKeyHuman(selectedDateKey)}
 
 오늘 요약:
 - 보상 문장에서 사용할 표현: ${getSubject()}
@@ -2527,6 +2717,13 @@ ${recordLines || "기록 없음"}
       });
       $("clearBtn").addEventListener("click", clearAllRecords);
 
+      document.querySelectorAll(".date-prev").forEach((btn) => btn.addEventListener("click", () => shiftSelectedDate(-1)));
+      document.querySelectorAll(".date-next").forEach((btn) => btn.addEventListener("click", () => shiftSelectedDate(1)));
+      document.querySelectorAll(".date-today").forEach((btn) => btn.addEventListener("click", () => setSelectedDate(getTodayKey())));
+      document.querySelectorAll(".selected-date-input").forEach((input) => {
+        input.addEventListener("change", (event) => setSelectedDate(event.target.value));
+      });
+
       document.querySelectorAll(".scale-btn").forEach((btn) => {
         btn.addEventListener("click", () => setTimelineScale(btn.dataset.scale));
         btn.classList.toggle("active", Number(btn.dataset.scale) === timelineScale);
@@ -2542,6 +2739,7 @@ ${recordLines || "기록 없음"}
 
       renderCustomEmotionChips();
       renderCustomValueChips();
+      updateDateControls();
       validateStartForm();
       setupPwa();
       renderAll();
