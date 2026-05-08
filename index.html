@@ -1,0 +1,2301 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>작은 행동 보상 번역기</title>
+  <meta name="description" content="작은 행동의 시작과 멈춤을 회복의 증거로 남기는 로컬 PWA" />
+  <meta name="theme-color" content="#1f5f5b" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+
+  <style>
+    :root {
+      --bg: #f7f4ee;
+      --card: #ffffff;
+      --text: #1f2933;
+      --muted: #6b7280;
+      --line: #e5e7eb;
+      --accent: #1f5f5b;
+      --accent-soft: #e6f2ef;
+      --danger: #9f1239;
+      --warning: #92400e;
+      --good: #166534;
+      --blue: #1d4ed8;
+      --shadow: 0 10px 30px rgba(0,0,0,0.08);
+      --radius: 22px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", system-ui, sans-serif;
+      background: linear-gradient(180deg, #f8f5ef 0%, #eef4f2 100%);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .app {
+      width: min(960px, 100%);
+      margin: 0 auto;
+      padding: 20px;
+      padding-bottom: 70px;
+    }
+
+    header { padding: 18px 4px 10px; }
+
+    h1 {
+      margin: 0;
+      font-size: 28px;
+      letter-spacing: -0.04em;
+    }
+
+    .subtitle {
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.5;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin: 14px 0 16px;
+      position: sticky;
+      top: 0;
+      background: rgba(247,244,238,0.88);
+      backdrop-filter: blur(10px);
+      padding: 8px 0;
+      z-index: 10;
+    }
+
+    .tab {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 999px;
+      padding: 11px 8px;
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--text);
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .tab.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 18px;
+      margin-bottom: 16px;
+    }
+
+    .card h2 {
+      margin: 0 0 14px;
+      font-size: 21px;
+      letter-spacing: -0.03em;
+    }
+
+    .field { margin: 16px 0; }
+
+    label {
+      display: block;
+      font-weight: 900;
+      margin-bottom: 8px;
+      font-size: 15px;
+    }
+
+    .hint, .small {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .hint { margin-top: 6px; }
+
+    input[type="text"], input[type="number"], textarea, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 13px 14px;
+      font-size: 16px;
+      font-family: inherit;
+      background: #fff;
+      color: var(--text);
+      outline: none;
+    }
+
+    textarea {
+      min-height: 120px;
+      resize: vertical;
+      line-height: 1.55;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(31,95,91,0.12);
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+      padding: 9px 12px;
+      font-size: 14px;
+      font-weight: 800;
+      cursor: pointer;
+      user-select: none;
+      font-family: inherit;
+    }
+
+    .chip.selected {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .state-chip[data-value="초록불"].selected { background: #dcfce7; color: var(--good); border-color: var(--good); }
+    .state-chip[data-value="노란불"].selected { background: #fef3c7; color: var(--warning); border-color: var(--warning); }
+    .state-chip[data-value="빨간불"].selected { background: #ffe4e6; color: var(--danger); border-color: var(--danger); }
+
+    .row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      border: none;
+      border-radius: 15px;
+      padding: 13px 15px;
+      font-size: 16px;
+      font-weight: 900;
+      cursor: pointer;
+      background: var(--accent);
+      color: #fff;
+      font-family: inherit;
+    }
+
+    .btn.secondary {
+      background: #f3f4f6;
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    .btn.danger {
+      background: #fff1f2;
+      color: var(--danger);
+      border: 1px solid #fecdd3;
+    }
+
+    .btn.warning {
+      background: #fffbeb;
+      color: var(--warning);
+      border: 1px solid #fde68a;
+    }
+
+    .btn.full { width: 100%; }
+    .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .active-panel {
+      text-align: center;
+      padding: 24px 12px;
+    }
+
+    .timer {
+      font-variant-numeric: tabular-nums;
+      font-size: clamp(46px, 13vw, 82px);
+      font-weight: 950;
+      letter-spacing: -0.06em;
+      margin: 14px 0 10px;
+      color: var(--accent);
+    }
+
+    .active-action {
+      font-size: 22px;
+      font-weight: 950;
+      letter-spacing: -0.03em;
+      margin: 8px 0;
+    }
+
+    .meta {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+
+    .stat {
+      background: #f9fafb;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 13px;
+    }
+
+    .stat .num {
+      font-size: 22px;
+      font-weight: 950;
+      color: var(--accent);
+      font-variant-numeric: tabular-nums;
+      word-break: keep-all;
+    }
+
+    .stat .label {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 2px;
+    }
+
+    .timeline-card {
+      overflow: hidden;
+    }
+
+    .daybar-wrap {
+      margin: 14px 0 4px;
+    }
+
+    .daybar-labels {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 12px;
+      margin-bottom: 6px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .daybar {
+      position: relative;
+      height: 34px;
+      background: #f3f4f6;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .daybar .now-line {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: rgba(31,95,91,0.5);
+      z-index: 3;
+    }
+
+    .bar-segment {
+      position: absolute;
+      top: 4px;
+      bottom: 4px;
+      border-radius: 999px;
+      background: var(--accent);
+      min-width: 3px;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+    }
+
+    .vertical-timeline {
+      position: relative;
+      height: 1680px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      overflow: hidden;
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          #ffffff 0,
+          #ffffff 69px,
+          #f3f4f6 70px
+        );
+      margin-top: 16px;
+    }
+
+    .hour-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: #e5e7eb;
+    }
+
+    .hour-label {
+      position: absolute;
+      left: 8px;
+      transform: translateY(-50%);
+      font-size: 11px;
+      color: #9ca3af;
+      background: rgba(255,255,255,0.8);
+      padding: 1px 4px;
+      border-radius: 6px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .timeline-block {
+      position: absolute;
+      left: 62px;
+      right: 10px;
+      min-height: 42px;
+      border-radius: 10px;
+      background: var(--accent-soft);
+      border: 1px solid rgba(31,95,91,0.25);
+      color: var(--accent);
+      padding: 8px 10px;
+      font-size: 13px;
+      overflow: visible;
+      font-weight: 900;
+      line-height: 1.35;
+      z-index: 2;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    .timeline-block-sub {
+      display: block;
+      margin-top: 2px;
+      font-size: 11px;
+      font-weight: 700;
+      opacity: 0.78;
+    }
+
+    .today-list-item {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px;
+      margin: 9px 0;
+      background: #fff;
+    }
+
+    .today-sentence {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border: 1px solid rgba(31,95,91,0.15);
+      border-radius: 18px;
+      padding: 14px;
+      font-weight: 900;
+      line-height: 1.5;
+      margin-top: 14px;
+    }
+
+    .record {
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+      margin: 10px 0;
+      background: #fff;
+    }
+
+    .record-title {
+      font-weight: 950;
+      font-size: 17px;
+      line-height: 1.35;
+      margin-bottom: 6px;
+    }
+
+    .badge {
+      display: inline-block;
+      border-radius: 999px;
+      padding: 4px 9px;
+      background: #f3f4f6;
+      color: #374151;
+      font-size: 12px;
+      font-weight: 900;
+      margin: 2px 4px 2px 0;
+    }
+
+    .badge.green { background: #dcfce7; color: var(--good); }
+    .badge.yellow { background: #fef3c7; color: var(--warning); }
+    .badge.red { background: #ffe4e6; color: var(--danger); }
+
+    .reward {
+      background: #f8fafc;
+      border-left: 4px solid var(--accent);
+      padding: 10px 12px;
+      border-radius: 12px;
+      line-height: 1.55;
+      margin: 10px 0;
+      white-space: pre-wrap;
+    }
+
+    .empty {
+      color: var(--muted);
+      text-align: center;
+      padding: 24px;
+      border: 1px dashed var(--line);
+      border-radius: 18px;
+      background: #fafafa;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 24px;
+      transform: translateX(-50%);
+      background: #111827;
+      color: #fff;
+      padding: 10px 14px;
+      border-radius: 999px;
+      font-size: 14px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      z-index: 99;
+      max-width: calc(100% - 32px);
+      text-align: center;
+    }
+
+    .toast.show { opacity: 1; }
+    .hidden { display: none !important; }
+
+    .divider {
+      height: 1px;
+      background: var(--line);
+      margin: 14px 0;
+    }
+
+    details {
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 12px 14px;
+      background: #fff;
+      margin: 10px 0;
+    }
+
+    summary {
+      cursor: pointer;
+      font-weight: 950;
+    }
+
+    .install-box {
+      background: #ecfeff;
+      border: 1px solid #a5f3fc;
+      color: #155e75;
+      border-radius: 16px;
+      padding: 12px;
+      line-height: 1.5;
+      font-size: 14px;
+      margin-bottom: 12px;
+    }
+
+    @media (max-width: 680px) {
+      .app { padding: 14px; padding-bottom: 58px; }
+      h1 { font-size: 24px; }
+      .tabs { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+      .tab { font-size: 12px; padding: 10px 5px; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .row .btn { flex: 1 1 100%; }
+      .timeline-block { left: 54px; }
+    }
+  
+    .timeline-tools {
+      display: grid;
+      gap: 10px;
+      margin: 8px 0 12px;
+    }
+
+    .scale-buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .scale-btn {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: 999px;
+      padding: 10px 8px;
+      font-size: 12px;
+      font-weight: 900;
+      font-family: inherit;
+      cursor: pointer;
+    }
+
+    .scale-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .timeline-jump-row .btn {
+      font-size: 14px;
+      padding: 10px 12px;
+    }
+
+    .timeline-scroll {
+      height: 72vh;
+      min-height: 460px;
+      overflow-y: auto;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: #fff;
+      scroll-behavior: smooth;
+      position: relative;
+    }
+
+    .vertical-timeline.precise {
+      position: relative;
+      border: none;
+      border-radius: 0;
+      overflow: visible;
+      margin-top: 0;
+      background:
+        repeating-linear-gradient(
+          to bottom,
+          #ffffff 0,
+          #ffffff var(--minor-step, 49px),
+          #f6f7f8 var(--minor-step-line, 50px)
+        );
+    }
+
+    .vertical-timeline.precise .hour-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: #d1d5db;
+      z-index: 1;
+    }
+
+    .vertical-timeline.precise .half-hour-line {
+      position: absolute;
+      left: 54px;
+      right: 0;
+      height: 1px;
+      background: #eef0f2;
+      z-index: 1;
+    }
+
+    .vertical-timeline.precise .hour-label {
+      position: absolute;
+      left: 8px;
+      transform: translateY(-50%);
+      font-size: 12px;
+      color: #6b7280;
+      background: rgba(255,255,255,0.92);
+      padding: 2px 5px;
+      border-radius: 7px;
+      font-variant-numeric: tabular-nums;
+      z-index: 4;
+      font-weight: 800;
+    }
+
+    .timeline-block {
+      position: absolute;
+      left: 74px;
+      right: 16px;
+      border-radius: 8px;
+      border-left: 5px solid var(--accent);
+      background: rgba(31,95,91,0.10);
+      color: var(--accent);
+      overflow: visible;
+      z-index: 3;
+      min-height: 0;
+      box-shadow: none;
+      padding: 0;
+      font-size: 13px;
+    }
+
+    .timeline-block-label {
+      position: absolute;
+      top: 0;
+      left: 9px;
+      right: 0;
+      transform: translateY(-2px);
+      background: rgba(255,255,255,0.94);
+      border: 1px solid rgba(31,95,91,0.18);
+      border-radius: 10px;
+      padding: 6px 8px;
+      line-height: 1.35;
+      font-weight: 900;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+      pointer-events: none;
+    }
+
+    .timeline-block-sub {
+      display: block;
+      margin-top: 2px;
+      font-size: 11px;
+      font-weight: 750;
+      opacity: 0.78;
+    }
+
+    .now-marker {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: rgba(159, 18, 57, 0.75);
+      z-index: 5;
+    }
+
+    .now-marker::before {
+      content: "현재";
+      position: absolute;
+      left: 8px;
+      top: -13px;
+      font-size: 11px;
+      font-weight: 900;
+      color: var(--danger);
+      background: #fff1f2;
+      border: 1px solid #fecdd3;
+      border-radius: 999px;
+      padding: 2px 6px;
+    }
+
+  
+    .trophy-hero {
+      position: relative;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at top right, rgba(31,95,91,0.16), transparent 38%),
+        linear-gradient(135deg, #ffffff 0%, #eef8f5 100%);
+      min-height: 190px;
+    }
+
+    .trophy-kicker {
+      color: var(--accent);
+      font-weight: 950;
+      letter-spacing: -0.02em;
+      margin-bottom: 10px;
+    }
+
+    .trophy-hero h2 {
+      font-size: clamp(25px, 5vw, 42px);
+      line-height: 1.18;
+      max-width: 700px;
+      margin-bottom: 10px;
+    }
+
+    .trophy-subtitle {
+      color: #4b5563;
+      font-size: 16px;
+      line-height: 1.6;
+      max-width: 760px;
+      margin: 0;
+      white-space: pre-line;
+    }
+
+    .trophy-stamp {
+      position: absolute;
+      right: -18px;
+      bottom: 10px;
+      transform: rotate(-12deg);
+      border: 4px solid rgba(31,95,91,0.14);
+      color: rgba(31,95,91,0.16);
+      border-radius: 20px;
+      padding: 10px 18px;
+      font-size: 34px;
+      font-weight: 950;
+      letter-spacing: 0.04em;
+      pointer-events: none;
+    }
+
+    .trophy-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin: 8px 0 14px;
+    }
+
+    .trophy-metric {
+      background: #f9fafb;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: 14px;
+    }
+
+    .trophy-num {
+      color: var(--accent);
+      font-size: 25px;
+      font-weight: 950;
+      font-variant-numeric: tabular-nums;
+      line-height: 1.1;
+    }
+
+    .trophy-label {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+      margin-top: 5px;
+      font-weight: 700;
+    }
+
+    .trophy-detail {
+      background: #f8fafc;
+      border-left: 4px solid var(--accent);
+      border-radius: 14px;
+      padding: 12px 14px;
+      line-height: 1.65;
+      color: #374151;
+      white-space: pre-line;
+    }
+
+    .value-map {
+      display: grid;
+      gap: 9px;
+    }
+
+    .value-row {
+      display: grid;
+      grid-template-columns: 86px 1fr 42px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .value-name {
+      font-weight: 900;
+      font-size: 13px;
+      color: #374151;
+      word-break: keep-all;
+    }
+
+    .value-bar-bg {
+      height: 14px;
+      background: #f3f4f6;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .value-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      border-radius: 999px;
+    }
+
+    .value-count {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 900;
+      text-align: right;
+    }
+
+    .trophy-sentences {
+      margin: 0;
+      padding-left: 22px;
+      line-height: 1.7;
+    }
+
+    .trophy-sentences li {
+      margin: 8px 0;
+      font-weight: 750;
+    }
+
+    @media (max-width: 680px) {
+      .trophy-grid { grid-template-columns: 1fr; }
+      .value-row { grid-template-columns: 74px 1fr 34px; }
+      .trophy-stamp { font-size: 25px; right: -22px; bottom: 4px; }
+    }
+
+  
+    .custom-add {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      margin-top: 10px;
+      align-items: center;
+    }
+
+    .custom-add .btn {
+      white-space: nowrap;
+      font-size: 14px;
+      padding: 12px 13px;
+    }
+
+    .custom-selected {
+      margin-top: 8px;
+    }
+
+    .custom-selected .chip {
+      background: #f8fafc;
+      border-style: dashed;
+    }
+
+    .custom-selected .chip::after {
+      content: " ×";
+      opacity: 0.75;
+      font-weight: 950;
+    }
+
+    @media (max-width: 680px) {
+      .custom-add {
+        grid-template-columns: 1fr;
+      }
+    }
+
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <header>
+      <h1>작은 행동 보상 번역기</h1>
+      <div class="subtitle">
+        시작한 시간, 멈춘 시간, 다시 돌아온 시간을 모두 회복의 증거로 남깁니다.
+      </div>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" data-tab="start">시작</button>
+      <button class="tab" data-tab="today">오늘</button>
+      <button class="tab" data-tab="trophy">트로피</button>
+      <button class="tab" data-tab="records">기록</button>
+      <button class="tab" data-tab="settings">백업</button>
+    </div>
+
+    <main>
+      <section id="startTab">
+        <div id="idleView" class="card">
+          <h2>지금 작은 행동을 시작하기</h2>
+
+          <div class="field">
+            <label>지금 상태</label>
+            <div class="chips" id="stateChips"></div>
+          </div>
+
+          <div class="field">
+            <label>지금 감정</label>
+            <div class="chips" id="emotionChips"></div>
+            <div class="hint">여러 개 선택해도 됩니다.</div>
+
+            <div class="custom-add">
+              <input id="customEmotionInput" type="text" placeholder="직접 감정 추가: 예) 교감 결핍, 약간 붕 뜸, 방향감 흐림" />
+              <button class="btn secondary" id="addEmotionBtn" type="button">감정 추가</button>
+            </div>
+            <div class="chips custom-selected" id="customEmotionChips"></div>
+          </div>
+
+          <div class="field">
+            <label for="actionText">오늘 시작할 작은 행동</label>
+            <input id="actionText" type="text" placeholder="예: 치유농업사 교재 1쪽 보기, 근력운동 1세트, 물 마시기" />
+          </div>
+
+          <div class="field">
+            <label>연결된 가치</label>
+            <div class="chips" id="valueChips"></div>
+            <div class="hint">이 행동이 어떤 삶의 방향과 연결되는지 고릅니다.</div>
+
+            <div class="custom-add">
+              <input id="customValueInput" type="text" placeholder="직접 가치 추가: 예) 미래 현장성, 신경계 안정, 치유농업 준비" />
+              <button class="btn secondary" id="addValueBtn" type="button">가치 추가</button>
+            </div>
+            <div class="chips custom-selected" id="customValueChips"></div>
+          </div>
+
+          <div class="field">
+            <label for="difficulty">예상 난이도: <span id="difficultyLabel">3</span>/10</label>
+            <input id="difficulty" type="range" min="1" max="10" value="3" />
+          </div>
+
+          <button class="btn full" id="startBtn">시작 시간 기록하고 시작하기</button>
+          <div class="hint">
+            시작 버튼을 누르는 순간, 정확한 시작 시간이 저장됩니다.
+          </div>
+        </div>
+
+        <div id="activeView" class="card hidden">
+          <div class="active-panel">
+            <div class="meta">현재 진행 중인 회복 행동</div>
+            <div class="active-action" id="activeAction">-</div>
+            <div class="timer" id="timer">00:00:00</div>
+            <div class="meta" id="activeMeta">-</div>
+
+            <div class="divider"></div>
+
+            <div class="row">
+              <button class="btn warning" id="pauseBtn">여기까지 기록하기</button>
+              <button class="btn" id="completeBtn">완료로 기록하기</button>
+            </div>
+
+            <div class="hint">
+              멈춤도 실패가 아니라 기록입니다. 여기까지 한 만큼 남깁니다.
+            </div>
+          </div>
+        </div>
+
+        <div id="endView" class="card hidden">
+          <h2 id="endTitle">여기까지 기록하기</h2>
+          <div class="meta" id="endSummary">-</div>
+
+          <div class="field">
+            <label>멈춘/끝낸 이유</label>
+            <div class="chips" id="reasonChips"></div>
+          </div>
+
+          <div class="field">
+            <label>행동 후 감각</label>
+            <div class="chips" id="sensationChips"></div>
+          </div>
+
+          <div class="field">
+            <label for="rewardText">보상 문장</label>
+            <textarea id="rewardText"></textarea>
+            <div class="hint">마음에 들지 않으면 직접 고쳐도 됩니다.</div>
+          </div>
+
+          <div class="field">
+            <label for="trophyText">오늘의 증거 문장</label>
+            <input id="trophyText" type="text" />
+          </div>
+
+          <div class="row">
+            <button class="btn secondary" id="copyPromptBtn">GPT에게 다듬기용 프롬프트 복사</button>
+            <button class="btn" id="saveRecordBtn">기록 저장하기</button>
+            <button class="btn danger" id="cancelEndBtn">저장하지 않고 취소</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="todayTab" class="hidden">
+        <div id="installBox" class="install-box hidden">
+          안드로이드 Chrome에서 설치 가능 상태가 되면 이곳에 설치 버튼이 나타납니다.
+        </div>
+
+        <div class="card">
+          <h2>오늘의 회복 대시보드</h2>
+          <div class="stats-grid">
+            <div class="stat">
+              <div class="num" id="todayCount">0</div>
+              <div class="label">오늘 세션</div>
+            </div>
+            <div class="stat">
+              <div class="num" id="todayTime">0초</div>
+              <div class="label">오늘 총 시간</div>
+            </div>
+            <div class="stat">
+              <div class="num" id="todayReturn">0</div>
+              <div class="label">다시 시작</div>
+            </div>
+            <div class="stat">
+              <div class="num" id="todayValuesCount">0</div>
+              <div class="label">접촉한 가치</div>
+            </div>
+          </div>
+          <div class="today-sentence" id="todaySentence">
+            오늘의 작은 행동이 아직 기록되지 않았습니다.
+          </div>
+        </div>
+
+        <div class="card timeline-card">
+          <h2>00:00–24:00 하루 바</h2>
+          <div class="daybar-wrap">
+            <div class="daybar-labels">
+              <span>00:00</span>
+              <span>06:00</span>
+              <span>12:00</span>
+              <span>18:00</span>
+              <span>24:00</span>
+            </div>
+            <div class="daybar" id="daybar"></div>
+            <div class="hint">작은 블록 하나도 오늘 사라지지 않은 회복의 흔적입니다.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>정밀 세로 타임라인</h2>
+          <div class="timeline-tools">
+            <div class="scale-buttons">
+              <button class="scale-btn" data-scale="2">간단 2px/분</button>
+              <button class="scale-btn" data-scale="5">표준 5px/분</button>
+              <button class="scale-btn active" data-scale="10">정밀 10px/분</button>
+              <button class="scale-btn" data-scale="15">초정밀 15px/분</button>
+            </div>
+            <div class="row timeline-jump-row">
+              <button class="btn secondary" id="jumpNowBtn">현재 시간으로 이동</button>
+              <button class="btn secondary" id="jumpFirstRecordBtn">오늘 첫 기록으로 이동</button>
+            </div>
+          </div>
+          <div class="timeline-scroll" id="timelineScroll">
+            <div class="vertical-timeline precise" id="verticalTimeline"></div>
+          </div>
+          <div class="hint">
+            가로 바는 하루가 채워지는 트로피 감각을, 세로 타임라인은 정확한 시간 기록을 담당합니다.
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>오늘 기록 목록</h2>
+          <div id="todayList"></div>
+        </div>
+      </section>
+
+
+      <section id="trophyTab" class="hidden">
+        <div class="card trophy-hero">
+          <div class="trophy-kicker">오늘의 회복 트로피</div>
+          <h2 id="trophyTitle">오늘의 작은 행동이 아직 기록되지 않았습니다.</h2>
+          <p id="trophySubtitle" class="trophy-subtitle">
+            첫 기록 하나가 생기면 이곳에 오늘의 회복 트로피가 만들어집니다.
+          </p>
+          <div class="trophy-stamp" id="trophyStamp">TROPHY</div>
+        </div>
+
+        <div class="card">
+          <h2>오늘의 보상 요약</h2>
+          <div class="trophy-grid">
+            <div class="trophy-metric">
+              <div class="trophy-num" id="trophySessionCount">0</div>
+              <div class="trophy-label">삶의 방향으로 돌아온 횟수</div>
+            </div>
+            <div class="trophy-metric">
+              <div class="trophy-num" id="trophyTotalTime">0초</div>
+              <div class="trophy-label">사라지지 않고 남은 시간</div>
+            </div>
+            <div class="trophy-metric">
+              <div class="trophy-num" id="trophyValueCount">0</div>
+              <div class="trophy-label">행동으로 접촉한 가치</div>
+            </div>
+          </div>
+
+          <div class="trophy-detail" id="trophyDetail">
+            오늘의 기록이 아직 없습니다.
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>오늘 행동으로 살아난 가치</h2>
+          <div id="trophyValueMap" class="value-map"></div>
+          <div class="hint">
+            가치는 머릿속 개념으로만 남지 않고, 오늘의 작은 행동을 통해 조금씩 몸으로 내려옵니다.
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>오늘의 회복 문장 3개</h2>
+          <ol class="trophy-sentences" id="trophySentences">
+            <li>아직 기록이 없습니다.</li>
+          </ol>
+        </div>
+
+        <div class="card">
+          <h2>하루 마무리 질문</h2>
+          <label for="dailyReflection">오늘 나를 살린 가장 작은 행동은 무엇이었나요?</label>
+          <textarea id="dailyReflection" placeholder="짧게 한 문장만 적어도 충분합니다. 예: 교재를 4분 읽었다."></textarea>
+          <div class="row">
+            <button class="btn" id="saveReflectionBtn">마무리 문장 저장</button>
+            <button class="btn secondary" id="copyTrophyPromptBtn">오늘 트로피 GPT 프롬프트 복사</button>
+          </div>
+          <div class="hint">
+            이 질문은 평가가 아니라 회수입니다. 오늘 남은 작은 흔적을 자기편으로 돌려놓는 시간입니다.
+          </div>
+        </div>
+      </section>
+
+      <section id="recordsTab" class="hidden">
+        <div class="card">
+          <h2>누적 기록</h2>
+          <div id="recordsList"></div>
+        </div>
+      </section>
+
+      <section id="settingsTab" class="hidden">
+        <div class="card">
+          <h2>PWA 설치 상태</h2>
+          <p class="small" id="pwaStatus">설치 상태를 확인 중입니다.</p>
+          <div class="row">
+            <button class="btn" id="installBtn" disabled>앱 설치하기</button>
+          </div>
+          <p class="small">
+            Android Chrome에서 HTTPS 주소로 접속하면 설치 버튼이 활성화될 수 있습니다.
+            iOS에서는 공유 버튼 → 홈 화면에 추가를 사용합니다.
+          </p>
+        </div>
+
+        <div class="card">
+          <h2>백업과 복원</h2>
+          <p class="small">
+            이 앱은 데이터를 이 기기 브라우저의 localStorage에 저장합니다.
+            앱/브라우저 설정이나 캐시 정리에 따라 데이터가 사라질 수 있으니,
+            가끔 JSON으로 내보내기 해두는 것을 추천합니다.
+          </p>
+
+          <div class="row">
+            <button class="btn" id="exportBtn">JSON 백업 내보내기</button>
+            <button class="btn secondary" id="importBtn">JSON 불러오기</button>
+            <input id="importFile" class="hidden" type="file" accept="application/json,.json" />
+          </div>
+
+          <div class="divider"></div>
+
+          <details>
+            <summary>전체 기록 삭제</summary>
+            <p class="small">정말 필요한 경우에만 사용하세요. 삭제 전 JSON 백업을 권합니다.</p>
+            <button class="btn danger" id="clearBtn">전체 기록 삭제하기</button>
+          </details>
+        </div>
+
+        <div class="card">
+          <h2>사용 원칙</h2>
+          <p class="small">
+            이 앱의 목표는 완벽한 성취가 아니라 복귀입니다.
+            30초도 기록합니다. 지루해서 멈춰도 기록합니다.
+            다시 시작한 횟수는 실패의 흔적이 아니라 삶으로 돌아온 흔적입니다.
+          </p>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast">복사되었습니다</div>
+
+  <script>
+    const STORAGE_KEY = "minwoo_recovery_records_v2";
+    const OLD_STORAGE_KEY = "minwoo_recovery_records_v1";
+    const ACTIVE_KEY = "minwoo_recovery_active_v2";
+    const REFLECTION_KEY = "minwoo_daily_reflection_v1";
+    const OLD_ACTIVE_KEY = "minwoo_recovery_active_v1";
+
+    const STATES = ["초록불", "노란불", "빨간불"];
+    const EMOTIONS = ["공허함", "불안", "무기력", "답답함", "외로움", "슬픔", "분노", "죄책감", "평온함", "약간 괜찮음"];
+    const VALUES = ["몸 돌봄", "회복", "자립", "공부", "연결", "공공성", "창작", "함께 회복", "감각에너지", "자기존중"];
+    const REASONS = ["지루함", "피로", "불안", "집중 끊김", "외부 일정", "충분히 함", "몸이 힘듦", "기타"];
+    const SENSATIONS = ["조금 안정됨", "여전히 힘듦", "몸이 조금 깨어남", "약간 뿌듯함", "별 느낌 없음", "조금 정돈됨", "더 피곤함"];
+
+    let selectedState = "";
+    let selectedEmotions = [];
+    let selectedValues = [];
+    let customEmotions = [];
+    let customValues = [];
+    let selectedReason = "";
+    let selectedSensation = "";
+    let activeSession = null;
+    let pendingEnd = null;
+    let timerInterval = null;
+    let deferredInstallPrompt = null;
+    let timelineScale = Number(localStorage.getItem("minwoo_timeline_scale_v1")) || 10;
+
+    const $ = (id) => document.getElementById(id);
+
+    function nowIso() {
+      return new Date().toISOString();
+    }
+
+    function formatDateTime(isoOrMs) {
+      const date = typeof isoOrMs === "number" ? new Date(isoOrMs) : new Date(isoOrMs);
+      return new Intl.DateTimeFormat("ko-KR", {
+        year: "numeric", month: "2-digit", day: "2-digit",
+        hour: "2-digit", minute: "2-digit", second: "2-digit"
+      }).format(date);
+    }
+
+    function formatTimeOnly(isoOrMs) {
+      const date = typeof isoOrMs === "number" ? new Date(isoOrMs) : new Date(isoOrMs);
+      return new Intl.DateTimeFormat("ko-KR", {
+        hour: "2-digit", minute: "2-digit"
+      }).format(date);
+    }
+
+    function formatDuration(sec) {
+      sec = Math.max(0, Math.floor(sec));
+      const h = Math.floor(sec / 3600);
+      const m = Math.floor((sec % 3600) / 60);
+      const s = sec % 60;
+      const pad = (n) => String(n).padStart(2, "0");
+      return `${pad(h)}:${pad(m)}:${pad(s)}`;
+    }
+
+    function formatDurationShort(sec) {
+      sec = Math.max(0, Math.floor(sec));
+      const h = Math.floor(sec / 3600);
+      const m = Math.floor((sec % 3600) / 60);
+      const s = sec % 60;
+      if (h > 0) return `${h}시간 ${m}분`;
+      if (m > 0) return `${m}분 ${s}초`;
+      return `${s}초`;
+    }
+
+    function getTodayKey(date = new Date()) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      const d = String(date.getDate()).padStart(2, "0");
+      return `${y}-${m}-${d}`;
+    }
+
+    function parseTodayKey(iso) {
+      return getTodayKey(new Date(iso));
+    }
+
+    function minutesSinceMidnight(iso) {
+      const d = new Date(iso);
+      return d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60;
+    }
+
+    function migrateOldStorageIfNeeded() {
+      if (!localStorage.getItem(STORAGE_KEY) && localStorage.getItem(OLD_STORAGE_KEY)) {
+        localStorage.setItem(STORAGE_KEY, localStorage.getItem(OLD_STORAGE_KEY));
+      }
+      if (!localStorage.getItem(ACTIVE_KEY) && localStorage.getItem(OLD_ACTIVE_KEY)) {
+        localStorage.setItem(ACTIVE_KEY, localStorage.getItem(OLD_ACTIVE_KEY));
+      }
+    }
+
+    function loadRecords() {
+      try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+      catch { return []; }
+    }
+
+    function saveRecords(records) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    }
+
+    function saveActive(session) {
+      localStorage.setItem(ACTIVE_KEY, JSON.stringify(session));
+    }
+
+    function loadActive() {
+      try { return JSON.parse(localStorage.getItem(ACTIVE_KEY)); }
+      catch { return null; }
+    }
+
+    function clearActive() {
+      localStorage.removeItem(ACTIVE_KEY);
+    }
+
+    function showToast(message) {
+      const toast = $("toast");
+      toast.textContent = message;
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 1800);
+    }
+
+    function makeChips(containerId, items, onChange, chipClass = "") {
+      const container = $(containerId);
+      container.innerHTML = "";
+      items.forEach((item) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = `chip ${chipClass}`;
+        button.textContent = item;
+        button.dataset.value = item;
+        button.addEventListener("click", () => onChange(item));
+        container.appendChild(button);
+      });
+    }
+
+    function updateChipSelection(containerId, selected) {
+      const container = $(containerId);
+      [...container.children].forEach((child) => {
+        const value = child.dataset.value;
+        const isSelected = Array.isArray(selected) ? selected.includes(value) : selected === value;
+        child.classList.toggle("selected", isSelected);
+      });
+    }
+
+    function normalizeTagText(text) {
+      return text.trim().replace(/\s+/g, " ");
+    }
+
+    function addUniqueTag(targetArrayName, value) {
+      const tag = normalizeTagText(value);
+      if (!tag) return false;
+
+      if (targetArrayName === "emotion") {
+        if (!selectedEmotions.includes(tag)) selectedEmotions.push(tag);
+        if (!EMOTIONS.includes(tag) && !customEmotions.includes(tag)) customEmotions.push(tag);
+        renderCustomEmotionChips();
+        updateChipSelection("emotionChips", selectedEmotions);
+        return true;
+      }
+
+      if (targetArrayName === "value") {
+        if (!selectedValues.includes(tag)) selectedValues.push(tag);
+        if (!VALUES.includes(tag) && !customValues.includes(tag)) customValues.push(tag);
+        renderCustomValueChips();
+        updateChipSelection("valueChips", selectedValues);
+        validateStartForm();
+        return true;
+      }
+
+      return false;
+    }
+
+    function removeCustomEmotion(value) {
+      selectedEmotions = selectedEmotions.filter((v) => v !== value);
+      customEmotions = customEmotions.filter((v) => v !== value);
+      renderCustomEmotionChips();
+      updateChipSelection("emotionChips", selectedEmotions);
+    }
+
+    function removeCustomValue(value) {
+      selectedValues = selectedValues.filter((v) => v !== value);
+      customValues = customValues.filter((v) => v !== value);
+      renderCustomValueChips();
+      updateChipSelection("valueChips", selectedValues);
+      validateStartForm();
+    }
+
+    function renderCustomEmotionChips() {
+      const container = $("customEmotionChips");
+      if (!container) return;
+      container.innerHTML = "";
+      customEmotions.forEach((item) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "chip selected";
+        button.textContent = item;
+        button.dataset.value = item;
+        button.title = "누르면 제거됩니다";
+        button.addEventListener("click", () => removeCustomEmotion(item));
+        container.appendChild(button);
+      });
+    }
+
+    function renderCustomValueChips() {
+      const container = $("customValueChips");
+      if (!container) return;
+      container.innerHTML = "";
+      customValues.forEach((item) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "chip selected";
+        button.textContent = item;
+        button.dataset.value = item;
+        button.title = "누르면 제거됩니다";
+        button.addEventListener("click", () => removeCustomValue(item));
+        container.appendChild(button);
+      });
+    }
+
+    function addCustomEmotionFromInput() {
+      const input = $("customEmotionInput");
+      if (!input) return;
+      const ok = addUniqueTag("emotion", input.value);
+      if (ok) {
+        input.value = "";
+        showToast("직접 감정이 추가되었습니다");
+      }
+    }
+
+    function addCustomValueFromInput() {
+      const input = $("customValueInput");
+      if (!input) return;
+      const ok = addUniqueTag("value", input.value);
+      if (ok) {
+        input.value = "";
+        showToast("직접 가치가 추가되었습니다");
+      }
+    }
+
+    function toggleArray(arr, value) {
+      return arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value];
+    }
+
+    function validateStartForm() {
+      const action = $("actionText").value.trim();
+      const ok = selectedState && action && selectedValues.length > 0;
+      $("startBtn").disabled = !ok;
+    }
+
+    function stateBadgeClass(state) {
+      if (state === "초록불") return "green";
+      if (state === "노란불") return "yellow";
+      if (state === "빨간불") return "red";
+      return "";
+    }
+
+    function startSession() {
+      const action = $("actionText").value.trim();
+      if (!selectedState || !action || selectedValues.length === 0) {
+        showToast("상태, 작은 행동, 가치를 입력해주세요");
+        return;
+      }
+
+      activeSession = {
+        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()),
+        createdAt: nowIso(),
+        startAt: nowIso(),
+        startMs: Date.now(),
+        stateBefore: selectedState,
+        emotionsBefore: selectedEmotions,
+        actionText: action,
+        values: selectedValues,
+        expectedDifficulty: Number($("difficulty").value)
+      };
+
+      saveActive(activeSession);
+      showActiveView();
+      showToast("시작 시간이 기록되었습니다");
+    }
+
+    function showIdleView() {
+      $("idleView").classList.remove("hidden");
+      $("activeView").classList.add("hidden");
+      $("endView").classList.add("hidden");
+      if (timerInterval) clearInterval(timerInterval);
+    }
+
+    function showActiveView() {
+      $("idleView").classList.add("hidden");
+      $("activeView").classList.remove("hidden");
+      $("endView").classList.add("hidden");
+
+      $("activeAction").textContent = activeSession.actionText;
+      $("activeMeta").innerHTML = `
+        시작: ${formatDateTime(activeSession.startAt)}<br />
+        상태: ${activeSession.stateBefore} · 가치: ${activeSession.values.join(", ")}
+      `;
+
+      updateTimer();
+      if (timerInterval) clearInterval(timerInterval);
+      timerInterval = setInterval(updateTimer, 1000);
+    }
+
+    function updateTimer() {
+      if (!activeSession) return;
+      const elapsed = Math.floor((Date.now() - activeSession.startMs) / 1000);
+      $("timer").textContent = formatDuration(elapsed);
+    }
+
+    function endSession(type) {
+      if (!activeSession) return;
+
+      const endMs = Date.now();
+      const endAt = nowIso();
+      const durationSec = Math.max(0, Math.floor((endMs - activeSession.startMs) / 1000));
+
+      pendingEnd = { ...activeSession, endType: type, endAt, endMs, durationSec };
+
+      selectedReason = type === "완료" ? "충분히 함" : "";
+      selectedSensation = "";
+
+      $("endTitle").textContent = type === "완료" ? "완료로 기록하기" : "여기까지 기록하기";
+      $("endSummary").innerHTML = `
+        시작: ${formatDateTime(pendingEnd.startAt)}<br />
+        끝: ${formatDateTime(pendingEnd.endAt)}<br />
+        지속 시간: ${formatDurationShort(pendingEnd.durationSec)}
+      `;
+
+      updateChipSelection("reasonChips", selectedReason);
+      updateChipSelection("sensationChips", selectedSensation);
+
+      $("rewardText").value = generateRewardSentence(pendingEnd, selectedReason, selectedSensation);
+      $("trophyText").value = generateTrophySentence(pendingEnd);
+
+      $("idleView").classList.add("hidden");
+      $("activeView").classList.add("hidden");
+      $("endView").classList.remove("hidden");
+
+      if (timerInterval) clearInterval(timerInterval);
+    }
+
+    function generateRewardSentence(session, reason = "", sensation = "") {
+      const duration = formatDurationShort(session.durationSec);
+      const values = session.values.join(", ");
+      const emotions = session.emotionsBefore && session.emotionsBefore.length > 0
+        ? session.emotionsBefore.join(", ")
+        : "뚜렷하게 이름 붙이기 어려운 감정";
+
+      const endPhrase = session.endType === "완료" ? "완료로 기록했다" : "여기까지 한 만큼을 기록했다";
+      const reasonPhrase = reason ? `${reason} 때문에 멈췄거나 마무리했지만,` : "멈춘 이유가 아직 명확하지 않아도,";
+      const sensationPhrase = sensation ? `행동 후 감각은 '${sensation}'으로 남았다.` : "행동 후 감각은 아직 더 관찰해도 괜찮다.";
+
+      return `민우는 ${session.stateBefore} 상태와 ${emotions} 속에서도 '${session.actionText}'을/를 ${duration} 동안 시도했고, ${endPhrase}.
+
+이 행동은 작아 보여도 ${values}이라는 가치를 몸으로 번역한 회복 행동이다.
+
+${reasonPhrase} 이것은 실패가 아니라 시작하고, 알아차리고, 멈춤까지 기록한 하나의 회복 루프다.
+
+${sensationPhrase}
+
+오늘 민우는 자신을 완전히 버리지 않았다.`;
+    }
+
+    function generateTrophySentence(session) {
+      const duration = formatDurationShort(session.durationSec);
+      if (session.endType === "완료") return `${duration}의 회복 행동이 완료로 남았다.`;
+      return `${duration}의 회복 행동이 여기까지의 기록으로 남았다.`;
+    }
+
+    function buildGptPrompt(recordLike) {
+      const reward = $("rewardText").value.trim();
+      const trophy = $("trophyText").value.trim();
+
+      return `아래는 민우가 로컬 회복 행동 기록 앱에 남긴 작은 행동 기록입니다.
+
+목표:
+- 이 행동을 과장하지 않고, 하찮게 만들지도 말아주세요.
+- 상담자처럼 길게 분석하지 말고, 짧고 따뜻하게 다듬어주세요.
+- 핵심은 '작은 행동을 회복의 증거와 내적보상 문장으로 번역하는 것'입니다.
+- 자기비난을 줄이고, 다시 시작할 수 있다는 감각을 살려주세요.
+- 문장은 3~5문장 정도로 정리해주세요.
+
+기록:
+- 시작 시간: ${formatDateTime(recordLike.startAt)}
+- 끝 시간: ${formatDateTime(recordLike.endAt)}
+- 지속 시간: ${formatDurationShort(recordLike.durationSec)}
+- 시작 전 상태: ${recordLike.stateBefore}
+- 시작 전 감정: ${(recordLike.emotionsBefore || []).join(", ") || "기록 없음"}
+- 작은 행동: ${recordLike.actionText}
+- 연결된 가치: ${(recordLike.values || []).join(", ")}
+- 끝낸 방식: ${recordLike.endType}
+- 멈춘/끝낸 이유: ${selectedReason || recordLike.stopReason || "기록 없음"}
+- 행동 후 감각: ${selectedSensation || recordLike.sensationAfter || "기록 없음"}
+
+현재 보상 문장 초안:
+${reward}
+
+현재 증거 문장:
+${trophy}
+
+이 기록을 민우에게 맞는 보상 문장으로 다듬어주세요.`;
+    }
+
+    function buildGptPromptFromRecord(record) {
+      return `아래는 민우가 로컬 회복 행동 기록 앱에 남긴 작은 행동 기록입니다.
+
+목표:
+- 이 행동을 과장하지 않고, 하찮게 만들지도 말아주세요.
+- 상담자처럼 길게 분석하지 말고, 짧고 따뜻하게 다듬어주세요.
+- 핵심은 '작은 행동을 회복의 증거와 내적보상 문장으로 번역하는 것'입니다.
+- 자기비난을 줄이고, 다시 시작할 수 있다는 감각을 살려주세요.
+- 문장은 3~5문장 정도로 정리해주세요.
+
+기록:
+- 시작 시간: ${formatDateTime(record.startAt)}
+- 끝 시간: ${formatDateTime(record.endAt)}
+- 지속 시간: ${formatDurationShort(record.durationSec)}
+- 시작 전 상태: ${record.stateBefore}
+- 시작 전 감정: ${(record.emotionsBefore || []).join(", ") || "기록 없음"}
+- 작은 행동: ${record.actionText}
+- 연결된 가치: ${(record.values || []).join(", ")}
+- 끝낸 방식: ${record.endType}
+- 멈춘/끝낸 이유: ${record.stopReason || "기록 없음"}
+- 행동 후 감각: ${record.sensationAfter || "기록 없음"}
+
+현재 보상 문장:
+${record.rewardSentence || "기록 없음"}
+
+현재 증거 문장:
+${record.trophySentence || "기록 없음"}
+
+이 기록을 민우에게 맞는 보상 문장으로 다듬어주세요.`;
+    }
+
+    async function copyText(text) {
+      try {
+        await navigator.clipboard.writeText(text);
+        showToast("복사되었습니다");
+      } catch {
+        const area = document.createElement("textarea");
+        area.value = text;
+        document.body.appendChild(area);
+        area.select();
+        document.execCommand("copy");
+        document.body.removeChild(area);
+        showToast("복사되었습니다");
+      }
+    }
+
+    function savePendingRecord() {
+      if (!pendingEnd) return;
+
+      const startMinute = minutesSinceMidnight(pendingEnd.startAt);
+      const endMinute = minutesSinceMidnight(pendingEnd.endAt);
+
+      const record = {
+        ...pendingEnd,
+        dateKey: parseTodayKey(pendingEnd.startAt),
+        startMinute,
+        endMinute,
+        stopReason: selectedReason || "",
+        sensationAfter: selectedSensation || "",
+        rewardSentence: $("rewardText").value.trim(),
+        trophySentence: $("trophyText").value.trim()
+      };
+
+      const records = loadRecords();
+      records.unshift(record);
+      saveRecords(records);
+
+      activeSession = null;
+      pendingEnd = null;
+      clearActive();
+
+      resetStartFormSoft();
+      showIdleView();
+      renderAll();
+      showToast("회복 기록이 저장되었습니다");
+      switchTab("today");
+    }
+
+    function resetStartFormSoft() {
+      $("actionText").value = "";
+      selectedEmotions = [];
+      selectedValues = [];
+      customEmotions = [];
+      customValues = [];
+      if ($("customEmotionInput")) $("customEmotionInput").value = "";
+      if ($("customValueInput")) $("customValueInput").value = "";
+      renderCustomEmotionChips();
+      renderCustomValueChips();
+      updateChipSelection("emotionChips", selectedEmotions);
+      updateChipSelection("valueChips", selectedValues);
+      validateStartForm();
+    }
+
+    function cancelEnd() {
+      if (!confirm("이 종료 기록을 저장하지 않을까요? 진행 중 세션도 삭제됩니다.")) return;
+      activeSession = null;
+      pendingEnd = null;
+      clearActive();
+      showIdleView();
+      showToast("진행 중 세션이 취소되었습니다");
+    }
+
+    function getTodayRecords() {
+      const today = getTodayKey();
+      return loadRecords()
+        .filter((r) => parseTodayKey(r.startAt) === today)
+        .sort((a, b) => new Date(a.startAt) - new Date(b.startAt));
+    }
+
+    function renderTodayDashboard() {
+      const todayRecords = getTodayRecords();
+      const todaySec = todayRecords.reduce((sum, r) => sum + (r.durationSec || 0), 0);
+      const values = [...new Set(todayRecords.flatMap((r) => r.values || []))];
+
+      $("todayCount").textContent = todayRecords.length;
+      $("todayTime").textContent = formatDurationShort(todaySec);
+      $("todayReturn").textContent = Math.max(0, todayRecords.length - 1);
+      $("todayValuesCount").textContent = values.length;
+
+      if (todayRecords.length === 0) {
+        $("todaySentence").textContent = "오늘의 작은 행동이 아직 기록되지 않았습니다. 첫 30초도 충분히 기록이 됩니다.";
+      } else if (todayRecords.length === 1) {
+        $("todaySentence").textContent = "오늘 민우는 1번 삶의 방향으로 돌아왔다.";
+      } else {
+        $("todaySentence").textContent = `오늘 민우는 ${todayRecords.length}번 삶의 방향으로 돌아왔다. 끊김보다 중요한 것은 다시 시작한 흔적이다.`;
+      }
+
+      renderDaybar(todayRecords);
+      renderVerticalTimeline(todayRecords);
+      renderTodayList(todayRecords);
+    }
+
+    function valueColor(record) {
+      const value = (record.values || [])[0] || "";
+      const map = {
+        "공부": "#1d4ed8",
+        "몸 돌봄": "#166534",
+        "회복": "#1f5f5b",
+        "자립": "#7c3aed",
+        "연결": "#be123c",
+        "공공성": "#0f766e",
+        "창작": "#c2410c",
+        "함께 회복": "#0369a1",
+        "감각에너지": "#4d7c0f",
+        "자기존중": "#854d0e"
+      };
+      return map[value] || "#1f5f5b";
+    }
+
+    function renderDaybar(records) {
+      const bar = $("daybar");
+      bar.innerHTML = "";
+
+      const now = new Date();
+      const nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+      const nowLine = document.createElement("div");
+      nowLine.className = "now-line";
+      nowLine.style.left = `${Math.min(100, Math.max(0, nowMin / 1440 * 100))}%`;
+      bar.appendChild(nowLine);
+
+      records.forEach((record) => {
+        const start = minutesSinceMidnight(record.startAt);
+        const durationMin = Math.max(record.durationSec / 60, 0.5);
+        const seg = document.createElement("div");
+        seg.className = "bar-segment";
+        seg.title = `${record.actionText} · ${formatDurationShort(record.durationSec)}`;
+        seg.style.left = `${Math.max(0, start / 1440 * 100)}%`;
+        seg.style.width = `${Math.max(0.4, durationMin / 1440 * 100)}%`;
+        seg.style.background = valueColor(record);
+        bar.appendChild(seg);
+      });
+    }
+
+    function renderVerticalTimeline(records) {
+      const timeline = $("verticalTimeline");
+      const scroll = $("timelineScroll");
+      if (!timeline || !scroll) return;
+
+      const scale = timelineScale; // px per minute
+      const totalHeight = 1440 * scale;
+      timeline.style.height = `${totalHeight}px`;
+      timeline.style.setProperty("--minor-step", `${Math.max(1, 5 * scale - 1)}px`);
+      timeline.style.setProperty("--minor-step-line", `${Math.max(1, 5 * scale)}px`);
+      timeline.innerHTML = "";
+
+      for (let h = 0; h <= 24; h++) {
+        const topPx = h * 60 * scale;
+        const line = document.createElement("div");
+        line.className = "hour-line";
+        line.style.top = `${topPx}px`;
+        timeline.appendChild(line);
+
+        if (h < 24) {
+          const label = document.createElement("div");
+          label.className = "hour-label";
+          label.style.top = `${topPx}px`;
+          label.textContent = `${String(h).padStart(2, "0")}:00`;
+          timeline.appendChild(label);
+        }
+
+        if (h < 24) {
+          const half = document.createElement("div");
+          half.className = "half-hour-line";
+          half.style.top = `${(h * 60 + 30) * scale}px`;
+          timeline.appendChild(half);
+        }
+      }
+
+      const now = new Date();
+      const nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+      const nowMarker = document.createElement("div");
+      nowMarker.className = "now-marker";
+      nowMarker.style.top = `${nowMin * scale}px`;
+      timeline.appendChild(nowMarker);
+
+      records.forEach((record) => {
+        const start = minutesSinceMidnight(record.startAt);
+        const durationMin = Math.max(record.durationSec / 60, 1 / scale); // visible but not exaggerated
+        const topPx = start * scale;
+        const heightPx = durationMin * scale;
+
+        const block = document.createElement("div");
+        block.className = "timeline-block";
+        block.style.top = `${topPx}px`;
+        block.style.height = `${heightPx}px`;
+        block.style.borderColor = valueColor(record);
+        block.style.background = `${hexToRgba(valueColor(record), 0.10)}`;
+        block.style.color = valueColor(record);
+
+        const exactTime = `${formatTimeOnly(record.startAt)}–${formatTimeOnly(record.endAt)}`;
+        const values = (record.values || []).map(escapeHtml).join(", ") || "가치 없음";
+
+        block.innerHTML = `
+          <div class="timeline-block-label">
+            ${exactTime} · ${escapeHtml(record.actionText)}
+            <span class="timeline-block-sub">${formatDurationShort(record.durationSec)} · ${values}</span>
+          </div>
+        `;
+        timeline.appendChild(block);
+      });
+    }
+
+    function setTimelineScale(scale) {
+      timelineScale = Number(scale);
+      localStorage.setItem("minwoo_timeline_scale_v1", String(timelineScale));
+      document.querySelectorAll(".scale-btn").forEach((btn) => {
+        btn.classList.toggle("active", Number(btn.dataset.scale) === timelineScale);
+      });
+      renderTodayDashboard();
+      showToast(`타임라인 배율: 1분 = ${timelineScale}px`);
+    }
+
+    function scrollTimelineToMinute(minute) {
+      const scroll = $("timelineScroll");
+      if (!scroll) return;
+      const y = Math.max(0, minute * timelineScale - scroll.clientHeight * 0.28);
+      scroll.scrollTo({ top: y, behavior: "smooth" });
+    }
+
+    function jumpToNow() {
+      const now = new Date();
+      const nowMin = now.getHours() * 60 + now.getMinutes() + now.getSeconds() / 60;
+      scrollTimelineToMinute(nowMin);
+    }
+
+    function jumpToFirstRecord() {
+      const records = getTodayRecords();
+      if (records.length === 0) {
+        jumpToNow();
+        showToast("오늘 기록이 없어 현재 시간으로 이동합니다");
+        return;
+      }
+      scrollTimelineToMinute(minutesSinceMidnight(records[0].startAt));
+    }
+
+    function hexToRgba(hex, alpha) {
+      const clean = hex.replace("#", "");
+      const bigint = parseInt(clean, 16);
+      const r = (bigint >> 16) & 255;
+      const g = (bigint >> 8) & 255;
+      const b = bigint & 255;
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    function renderTodayList(records) {
+      const list = $("todayList");
+      list.innerHTML = "";
+      if (records.length === 0) {
+        list.innerHTML = `<div class="empty">오늘 기록이 아직 없습니다. 작은 행동 하나를 시작해보세요.</div>`;
+        return;
+      }
+
+      records.forEach((record) => {
+        const div = document.createElement("div");
+        div.className = "today-list-item";
+        div.innerHTML = `
+          <div class="record-title">${escapeHtml(record.actionText)}</div>
+          <div class="meta">
+            ${formatTimeOnly(record.startAt)}–${formatTimeOnly(record.endAt)}
+            · ${formatDurationShort(record.durationSec)}
+            · ${(record.values || []).map(escapeHtml).join(", ") || "가치 없음"}
+          </div>
+          <div>
+            <span class="badge ${stateBadgeClass(record.stateBefore)}">${record.stateBefore}</span>
+            <span class="badge">${record.endType}</span>
+            <span class="badge">${escapeHtml(record.sensationAfter || "감각 기록 없음")}</span>
+          </div>
+        `;
+        list.appendChild(div);
+      });
+    }
+
+
+    function getValueCounts(records) {
+      const counts = {};
+      records.forEach((record) => {
+        (record.values || []).forEach((value) => {
+          counts[value] = (counts[value] || 0) + 1;
+        });
+      });
+      return counts;
+    }
+
+    function getReflectionKey() {
+      return `${REFLECTION_KEY}_${getTodayKey()}`;
+    }
+
+    function saveDailyReflection() {
+      const text = $("dailyReflection").value.trim();
+      localStorage.setItem(getReflectionKey(), text);
+      showToast("하루 마무리 문장이 저장되었습니다");
+      renderTrophyDashboard();
+    }
+
+    function getLongestRecord(records) {
+      if (!records.length) return null;
+      return [...records].sort((a, b) => (b.durationSec || 0) - (a.durationSec || 0))[0];
+    }
+
+    function renderTrophyDashboard() {
+      const records = getTodayRecords();
+      const totalSec = records.reduce((sum, r) => sum + (r.durationSec || 0), 0);
+      const valueCounts = getValueCounts(records);
+      const values = Object.keys(valueCounts);
+      const longest = getLongestRecord(records);
+      const reflection = localStorage.getItem(getReflectionKey()) || "";
+
+      if ($("dailyReflection")) $("dailyReflection").value = reflection;
+
+      $("trophySessionCount").textContent = records.length;
+      $("trophyTotalTime").textContent = formatDurationShort(totalSec);
+      $("trophyValueCount").textContent = values.length;
+
+      if (records.length === 0) {
+        $("trophyTitle").textContent = "오늘의 작은 행동이 아직 기록되지 않았습니다.";
+        $("trophySubtitle").textContent = "첫 기록 하나가 생기면 이곳에 오늘의 회복 트로피가 만들어집니다.";
+        $("trophyDetail").textContent = "오늘의 기록이 아직 없습니다.";
+        $("trophyValueMap").innerHTML = `<div class="empty">오늘 접촉한 가치가 아직 없습니다.</div>`;
+        $("trophySentences").innerHTML = `<li>첫 30초의 시작도 충분히 오늘의 트로피가 될 수 있습니다.</li>`;
+        return;
+      }
+
+      const mostValue = values.sort((a, b) => valueCounts[b] - valueCounts[a])[0];
+      const title = records.length === 1
+        ? "오늘 민우는 1번 삶의 방향으로 돌아왔다."
+        : `오늘 민우는 ${records.length}번 삶의 방향으로 돌아왔다.`;
+
+      $("trophyTitle").textContent = title;
+
+      const subtitleLines = [
+        `${formatDurationShort(totalSec)}의 시간이 사라지지 않고 회복 기록으로 남았습니다.`,
+        values.length ? `오늘 행동으로 접촉한 가치는 ${values.join(", ")}입니다.` : "",
+        reflection ? `오늘의 마무리 문장: ${reflection}` : "오늘을 평가하지 않고, 남은 흔적을 회수하는 시간입니다."
+      ].filter(Boolean);
+
+      $("trophySubtitle").textContent = subtitleLines.join("\n");
+
+      const detailLines = [
+        `총 ${records.length}개의 회복 세션이 남았습니다.`,
+        `총 시간은 ${formatDurationShort(totalSec)}입니다.`,
+        longest ? `가장 오래 남은 행동은 '${longest.actionText}' (${formatDurationShort(longest.durationSec)})입니다.` : "",
+        mostValue ? `오늘 가장 자주 살아난 가치는 '${mostValue}'입니다.` : "",
+        `다시 시작한 횟수는 ${Math.max(0, records.length - 1)}회로 기록됩니다.`
+      ].filter(Boolean);
+
+      $("trophyDetail").textContent = detailLines.join("\n");
+
+      renderTrophyValueMap(valueCounts);
+      renderTrophySentences(records, totalSec, mostValue, longest, reflection);
+    }
+
+    function renderTrophyValueMap(valueCounts) {
+      const wrap = $("trophyValueMap");
+      const entries = Object.entries(valueCounts).sort((a, b) => b[1] - a[1]);
+
+      if (entries.length === 0) {
+        wrap.innerHTML = `<div class="empty">오늘 접촉한 가치가 아직 없습니다.</div>`;
+        return;
+      }
+
+      const max = Math.max(...entries.map(([, count]) => count));
+      wrap.innerHTML = "";
+
+      entries.forEach(([value, count]) => {
+        const row = document.createElement("div");
+        row.className = "value-row";
+        row.innerHTML = `
+          <div class="value-name">${escapeHtml(value)}</div>
+          <div class="value-bar-bg">
+            <div class="value-bar-fill" style="width: ${Math.max(8, count / max * 100)}%; background: ${valueColor({ values: [value] })};"></div>
+          </div>
+          <div class="value-count">${count}회</div>
+        `;
+        wrap.appendChild(row);
+      });
+    }
+
+    function renderTrophySentences(records, totalSec, mostValue, longest, reflection) {
+      const list = $("trophySentences");
+      const count = records.length;
+      const longestText = longest ? `'${longest.actionText}'` : "작은 행동";
+
+      const sentences = [
+        count === 1
+          ? "오늘 민우는 한 번이라도 삶의 방향으로 돌아왔고, 그 한 번은 사라지지 않고 기록으로 남았다."
+          : `오늘 민우는 ${count}번 삶의 방향으로 돌아왔고, 끊김보다 다시 시작한 흔적을 남겼다.`,
+        mostValue
+          ? `오늘 ${mostValue}이라는 가치는 생각이 아니라 실제 행동으로 한 번 이상 몸을 통과했다.`
+          : "오늘의 가치는 아직 더 천천히 이름 붙여도 괜찮다.",
+        `${formatDurationShort(totalSec)}는 과장할 필요도, 하찮게 볼 필요도 없는 오늘의 정확한 회복 시간이다.`,
+        longest
+          ? `가장 오래 남은 행동은 ${longestText}이고, 이 행동은 오늘의 작은 중심점이 되었다.`
+          : "아직 가장 오래 남은 행동은 없다.",
+        reflection
+          ? `오늘 민우가 직접 남긴 문장도 트로피의 일부다: “${reflection}”`
+          : "오늘의 마무리 문장은 비워두어도 괜찮다. 비어 있음도 오늘의 여백으로 남는다."
+      ];
+
+      list.innerHTML = sentences.slice(0, 3).map((s) => `<li>${escapeHtml(s)}</li>`).join("");
+    }
+
+    function buildTrophyPrompt() {
+      const records = getTodayRecords();
+      const reflection = $("dailyReflection").value.trim();
+      const totalSec = records.reduce((sum, r) => sum + (r.durationSec || 0), 0);
+      const valueCounts = getValueCounts(records);
+      const values = Object.keys(valueCounts);
+      const longest = getLongestRecord(records);
+
+      const recordLines = records.map((r, idx) => {
+        return `${idx + 1}. ${formatTimeOnly(r.startAt)}–${formatTimeOnly(r.endAt)} · ${r.actionText} · ${formatDurationShort(r.durationSec)} · 가치: ${(r.values || []).join(", ") || "없음"} · 상태: ${r.stateBefore} · 감각: ${r.sensationAfter || "기록 없음"}`;
+      }).join("\n");
+
+      return `아래는 민우의 오늘 회복 행동 기록입니다.
+
+목표:
+- 하루를 평가하거나 압박하지 말고, 오늘 남은 작은 흔적을 회복 트로피처럼 정리해주세요.
+- 과장하지 말고, 하찮게 만들지도 말아주세요.
+- 핵심은 '작은 행동이 사라지지 않고 회복의 증거로 남았다'는 감각입니다.
+- 자기비난을 줄이고, 내일 다시 시작할 수 있는 감각을 살려주세요.
+- 5~8문장 정도로 하루 마무리 보상 문장을 만들어주세요.
+
+오늘 요약:
+- 회복 세션 수: ${records.length}
+- 총 회복 시간: ${formatDurationShort(totalSec)}
+- 접촉한 가치: ${values.join(", ") || "기록 없음"}
+- 가장 오래 남은 행동: ${longest ? `${longest.actionText} (${formatDurationShort(longest.durationSec)})` : "기록 없음"}
+- 민우가 직접 쓴 마무리 문장: ${reflection || "기록 없음"}
+
+오늘 기록:
+${recordLines || "기록 없음"}
+
+민우에게 맞는 '오늘의 회복 트로피' 문장으로 다듬어주세요.`;
+    }
+
+    function renderRecords() {
+      const records = loadRecords();
+      const list = $("recordsList");
+      list.innerHTML = "";
+
+      if (records.length === 0) {
+        list.innerHTML = `<div class="empty">아직 기록이 없습니다. 오늘 나를 살린 작은 행동 하나부터 시작해보세요.</div>`;
+        return;
+      }
+
+      records.forEach((record) => {
+        const div = document.createElement("div");
+        div.className = "record";
+        const stateClass = stateBadgeClass(record.stateBefore);
+        div.innerHTML = `
+          <div class="record-title">${escapeHtml(record.actionText)}</div>
+          <div>
+            <span class="badge ${stateClass}">${record.stateBefore}</span>
+            <span class="badge">${record.endType}</span>
+            <span class="badge">${formatDurationShort(record.durationSec)}</span>
+          </div>
+          <div class="meta">
+            시작: ${formatDateTime(record.startAt)}<br/>
+            끝: ${formatDateTime(record.endAt)}<br/>
+            감정: ${(record.emotionsBefore || []).map(escapeHtml).join(", ") || "기록 없음"}<br/>
+            가치: ${(record.values || []).map(escapeHtml).join(", ") || "기록 없음"}<br/>
+            이유: ${escapeHtml(record.stopReason || "기록 없음")} · 감각: ${escapeHtml(record.sensationAfter || "기록 없음")}
+          </div>
+          <div class="reward">${escapeHtml(record.rewardSentence || "")}</div>
+          <div class="row">
+            <button class="btn secondary copy-record">GPT 프롬프트 복사</button>
+            <button class="btn danger delete-record">삭제</button>
+          </div>
+        `;
+        div.querySelector(".copy-record").addEventListener("click", () => copyText(buildGptPromptFromRecord(record)));
+        div.querySelector(".delete-record").addEventListener("click", () => deleteRecord(record.id));
+        list.appendChild(div);
+      });
+    }
+
+    function deleteRecord(id) {
+      if (!confirm("이 기록을 삭제할까요?")) return;
+      const records = loadRecords().filter((r) => r.id !== id);
+      saveRecords(records);
+      renderAll();
+      showToast("기록이 삭제되었습니다");
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    function switchTab(tab) {
+      document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
+      $("startTab").classList.toggle("hidden", tab !== "start");
+      $("todayTab").classList.toggle("hidden", tab !== "today");
+      $("trophyTab").classList.toggle("hidden", tab !== "trophy");
+      $("recordsTab").classList.toggle("hidden", tab !== "records");
+      $("settingsTab").classList.toggle("hidden", tab !== "settings");
+      renderAll();
+    }
+
+    function exportJson() {
+      const records = loadRecords();
+      const payload = { app: "작은 행동 보상 번역기", version: 2, exportedAt: nowIso(), records };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `recovery-records-${getTodayKey()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      showToast("JSON 백업 파일을 만들었습니다");
+    }
+
+    function importJsonFile(file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(reader.result);
+          const incoming = Array.isArray(parsed) ? parsed : parsed.records;
+          if (!Array.isArray(incoming)) throw new Error("Invalid format");
+
+          const current = loadRecords();
+          const mergedMap = new Map();
+          [...incoming, ...current].forEach((r) => {
+            if (r && r.id) mergedMap.set(r.id, r);
+          });
+          const merged = [...mergedMap.values()].sort((a, b) => new Date(b.startAt) - new Date(a.startAt));
+          saveRecords(merged);
+          renderAll();
+          showToast("JSON 기록을 불러왔습니다");
+        } catch {
+          alert("불러오기 실패: 올바른 JSON 백업 파일인지 확인해주세요.");
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function clearAllRecords() {
+      if (!confirm("전체 기록을 삭제합니다. 먼저 백업했나요?")) return;
+      if (!confirm("정말 삭제할까요? 이 작업은 되돌릴 수 없습니다.")) return;
+      localStorage.removeItem(STORAGE_KEY);
+      renderAll();
+      showToast("전체 기록이 삭제되었습니다");
+    }
+
+    function renderAll() {
+      renderTodayDashboard();
+      renderTrophyDashboard();
+      renderRecords();
+      updatePwaStatus();
+    }
+
+    function setupPwa() {
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker.register("./service-worker.js")
+            .then(() => updatePwaStatus())
+            .catch(() => updatePwaStatus("서비스 워커 등록에 실패했습니다. 로컬 파일에서는 정상일 수 있습니다."));
+        });
+      }
+
+      window.addEventListener("beforeinstallprompt", (event) => {
+        event.preventDefault();
+        deferredInstallPrompt = event;
+        $("installBtn").disabled = false;
+        $("installBox").classList.remove("hidden");
+        $("installBox").innerHTML = `설치 가능 상태입니다. <button class="btn secondary" id="installInlineBtn">앱 설치하기</button>`;
+        $("installInlineBtn").addEventListener("click", promptInstall);
+        updatePwaStatus("설치 가능 상태입니다.");
+      });
+
+      window.addEventListener("appinstalled", () => {
+        deferredInstallPrompt = null;
+        $("installBtn").disabled = true;
+        showToast("앱이 설치되었습니다");
+        updatePwaStatus("앱이 설치되었습니다.");
+      });
+
+      $("installBtn").addEventListener("click", promptInstall);
+    }
+
+    async function promptInstall() {
+      if (!deferredInstallPrompt) {
+        showToast("현재 브라우저에서는 설치 버튼이 아직 준비되지 않았습니다");
+        return;
+      }
+      deferredInstallPrompt.prompt();
+      await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      $("installBtn").disabled = true;
+      updatePwaStatus();
+    }
+
+    function updatePwaStatus(extraMessage) {
+      const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+      const sw = "serviceWorker" in navigator ? "지원됨" : "미지원";
+      const secure = window.isSecureContext ? "HTTPS/보안 컨텍스트" : "비보안 컨텍스트";
+      let msg = `서비스 워커: ${sw} · 실행 환경: ${secure}`;
+      if (standalone) msg += " · 현재 설치 앱처럼 실행 중";
+      if (extraMessage) msg += ` · ${extraMessage}`;
+      if ($("pwaStatus")) $("pwaStatus").textContent = msg;
+    }
+
+    function init() {
+      migrateOldStorageIfNeeded();
+
+      makeChips("stateChips", STATES, (value) => {
+        selectedState = value;
+        updateChipSelection("stateChips", selectedState);
+        validateStartForm();
+      }, "state-chip");
+
+      makeChips("emotionChips", EMOTIONS, (value) => {
+        selectedEmotions = toggleArray(selectedEmotions, value);
+        updateChipSelection("emotionChips", selectedEmotions);
+      });
+
+      makeChips("valueChips", VALUES, (value) => {
+        selectedValues = toggleArray(selectedValues, value);
+        updateChipSelection("valueChips", selectedValues);
+        validateStartForm();
+      });
+
+      makeChips("reasonChips", REASONS, (value) => {
+        selectedReason = value;
+        updateChipSelection("reasonChips", selectedReason);
+        if (pendingEnd) $("rewardText").value = generateRewardSentence(pendingEnd, selectedReason, selectedSensation);
+      });
+
+      makeChips("sensationChips", SENSATIONS, (value) => {
+        selectedSensation = value;
+        updateChipSelection("sensationChips", selectedSensation);
+        if (pendingEnd) $("rewardText").value = generateRewardSentence(pendingEnd, selectedReason, selectedSensation);
+      });
+
+      $("difficulty").addEventListener("input", (e) => $("difficultyLabel").textContent = e.target.value);
+      $("actionText").addEventListener("input", validateStartForm);
+      $("addEmotionBtn").addEventListener("click", addCustomEmotionFromInput);
+      $("addValueBtn").addEventListener("click", addCustomValueFromInput);
+      $("customEmotionInput").addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          addCustomEmotionFromInput();
+        }
+      });
+      $("customValueInput").addEventListener("keydown", (event) => {
+        if (event.key === "Enter") {
+          event.preventDefault();
+          addCustomValueFromInput();
+        }
+      });
+
+      $("startBtn").addEventListener("click", startSession);
+      $("pauseBtn").addEventListener("click", () => endSession("여기까지"));
+      $("completeBtn").addEventListener("click", () => endSession("완료"));
+      $("copyPromptBtn").addEventListener("click", () => {
+        if (!pendingEnd) return;
+        copyText(buildGptPrompt(pendingEnd));
+      });
+      $("saveRecordBtn").addEventListener("click", savePendingRecord);
+      $("cancelEndBtn").addEventListener("click", cancelEnd);
+
+      document.querySelectorAll(".tab").forEach((b) => b.addEventListener("click", () => switchTab(b.dataset.tab)));
+
+      $("exportBtn").addEventListener("click", exportJson);
+      $("importBtn").addEventListener("click", () => $("importFile").click());
+      $("importFile").addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (file) importJsonFile(file);
+        e.target.value = "";
+      });
+      $("clearBtn").addEventListener("click", clearAllRecords);
+
+      document.querySelectorAll(".scale-btn").forEach((btn) => {
+        btn.addEventListener("click", () => setTimelineScale(btn.dataset.scale));
+        btn.classList.toggle("active", Number(btn.dataset.scale) === timelineScale);
+      });
+      $("jumpNowBtn").addEventListener("click", jumpToNow);
+      $("jumpFirstRecordBtn").addEventListener("click", jumpToFirstRecord);
+      $("saveReflectionBtn").addEventListener("click", saveDailyReflection);
+      $("copyTrophyPromptBtn").addEventListener("click", () => copyText(buildTrophyPrompt()));
+
+      activeSession = loadActive();
+      if (activeSession) showActiveView();
+      else showIdleView();
+
+      renderCustomEmotionChips();
+      renderCustomValueChips();
+      validateStartForm();
+      setupPwa();
+      renderAll();
+    }
+
+    init();
+  </script>
+</body>
+</html>
