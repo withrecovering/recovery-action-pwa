@@ -1,7 +1,7 @@
 {
   "name": "작은 행동 보상 번역기",
-  "short_name": "회복아카이브",
-  "description": "날짜별 회복 트로피와 타임라인으로 작은 행동의 의미를 남기는 로컬 PWA",
+  "short_name": "회복달력",
+  "description": "월간 회복 달력과 날짜별 트로피로 작은 행동의 의미를 남기는 로컬 PWA",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

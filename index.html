@@ -61,7 +61,7 @@
 
     .tabs {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(6, 1fr);
       gap: 8px;
       margin: 14px 0 16px;
       position: sticky;
@@ -497,7 +497,7 @@
     @media (max-width: 680px) {
       .app { padding: 14px; padding-bottom: 58px; }
       h1 { font-size: 24px; }
-      .tabs { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+      .tabs { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 6px; }
       .tab { font-size: 12px; padding: 10px 5px; }
       .stats-grid { grid-template-columns: repeat(2, 1fr); }
       .row .btn { flex: 1 1 100%; }
@@ -935,6 +935,192 @@
       }
     }
 
+  
+    .month-nav-card {
+      background:
+        radial-gradient(circle at bottom right, rgba(31,95,91,0.10), transparent 34%),
+        #ffffff;
+    }
+
+    .month-nav-top {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .month-center {
+      text-align: center;
+      min-width: 0;
+    }
+
+    .selected-month-title {
+      color: var(--accent);
+      font-size: clamp(24px, 5vw, 36px);
+      font-weight: 950;
+      letter-spacing: -0.04em;
+      line-height: 1.15;
+    }
+
+    .month-actions {
+      margin-top: 10px;
+      justify-content: center;
+    }
+
+    .calendar-card {
+      overflow: hidden;
+    }
+
+    .calendar-weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+      margin: 8px 0;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 950;
+      text-align: center;
+    }
+
+    .month-calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 6px;
+    }
+
+    .calendar-day {
+      min-height: 104px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+      padding: 9px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      transition: transform 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+    }
+
+    .calendar-day:active {
+      transform: scale(0.985);
+    }
+
+    .calendar-day.empty-day {
+      background: #f9fafb;
+      cursor: default;
+      opacity: 0.55;
+    }
+
+    .calendar-day.has-records {
+      border-color: rgba(31,95,91,0.35);
+      background: linear-gradient(180deg, #ffffff 0%, #f2faf7 100%);
+      box-shadow: 0 4px 14px rgba(31,95,91,0.08);
+    }
+
+    .calendar-day.selected-day {
+      border: 2px solid var(--accent);
+      box-shadow: 0 0 0 3px rgba(31,95,91,0.12);
+    }
+
+    .calendar-day.today-day .day-number {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .day-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 4px;
+    }
+
+    .day-number {
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 950;
+      color: var(--text);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .day-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--accent);
+    }
+
+    .day-metrics {
+      margin-top: auto;
+      display: grid;
+      gap: 4px;
+    }
+
+    .day-metric {
+      font-size: 11px;
+      line-height: 1.25;
+      color: #374151;
+      background: rgba(255,255,255,0.72);
+      border: 1px solid rgba(229,231,235,0.7);
+      border-radius: 9px;
+      padding: 4px 5px;
+      font-weight: 850;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .day-empty-text {
+      color: #9ca3af;
+      font-size: 11px;
+      margin-top: auto;
+      line-height: 1.35;
+    }
+
+    @media (max-width: 680px) {
+      .month-nav-top {
+        grid-template-columns: 1fr 1fr;
+      }
+      .month-center {
+        grid-column: 1 / -1;
+        grid-row: 1;
+        margin-bottom: 4px;
+      }
+      .month-prev {
+        grid-column: 1;
+        grid-row: 2;
+      }
+      .month-next {
+        grid-column: 2;
+        grid-row: 2;
+      }
+      .month-calendar-grid,
+      .calendar-weekdays {
+        gap: 4px;
+      }
+      .calendar-day {
+        min-height: 86px;
+        border-radius: 12px;
+        padding: 6px;
+      }
+      .day-number {
+        width: 24px;
+        height: 24px;
+        font-size: 12px;
+      }
+      .day-metric {
+        font-size: 10px;
+        padding: 3px 4px;
+      }
+      .calendar-stats {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
   </style>
 </head>
 
@@ -951,6 +1137,7 @@
       <button class="tab active" data-tab="start">시작</button>
       <button class="tab" data-tab="today">오늘</button>
       <button class="tab" data-tab="trophy">트로피</button>
+      <button class="tab" data-tab="calendar">달력</button>
       <button class="tab" data-tab="records">기록</button>
       <button class="tab" data-tab="settings">백업</button>
     </div>
@@ -1256,6 +1443,63 @@
         </div>
       </section>
 
+
+      <section id="calendarTab" class="hidden">
+        <div class="card month-nav-card">
+          <div class="month-nav-top">
+            <button class="btn secondary month-prev" type="button">〈 이전 달</button>
+            <div class="month-center">
+              <div class="date-kicker">월간 회복 달력</div>
+              <div class="selected-month-title" id="selectedMonthTitle">-</div>
+            </div>
+            <button class="btn secondary month-next" type="button">다음 달 〉</button>
+          </div>
+          <div class="row month-actions">
+            <button class="btn secondary month-today" type="button">이번 달로 이동</button>
+            <button class="btn secondary" id="goSelectedDateBtn" type="button">선택한 날짜 보기</button>
+          </div>
+          <div class="hint">
+            날짜를 누르면 그날의 회복 대시보드로 이동합니다. 빈 날짜는 실패가 아니라 여백입니다.
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>월간 회복 요약</h2>
+          <div class="stats-grid calendar-stats">
+            <div class="stat">
+              <div class="num" id="monthActiveDays">0</div>
+              <div class="label">기록 있는 날</div>
+            </div>
+            <div class="stat">
+              <div class="num" id="monthSessionCount">0</div>
+              <div class="label">월간 세션</div>
+            </div>
+            <div class="stat">
+              <div class="num" id="monthTotalTime">0초</div>
+              <div class="label">월간 총 시간</div>
+            </div>
+            <div class="stat">
+              <div class="num" id="monthValueCount">0</div>
+              <div class="label">접촉한 가치</div>
+            </div>
+          </div>
+          <div class="today-sentence" id="monthSentence">
+            이 달의 회복 기록이 아직 없습니다.
+          </div>
+        </div>
+
+        <div class="card calendar-card">
+          <h2>월간 캘린더</h2>
+          <div class="calendar-weekdays">
+            <div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div>
+          </div>
+          <div class="month-calendar-grid" id="monthCalendarGrid"></div>
+          <div class="hint">
+            각 날짜 칸에는 세션 수, 총 시간, 접촉한 가치 수가 표시됩니다.
+          </div>
+        </div>
+      </section>
+
       <section id="recordsTab" class="hidden">
         <div class="card">
           <h2>누적 기록</h2>
@@ -1369,6 +1613,7 @@
     let deferredInstallPrompt = null;
     let timelineScale = Number(localStorage.getItem("minwoo_timeline_scale_v1")) || 10;
     let selectedDateKey = localStorage.getItem("recovery_selected_date_v1") || getTodayKey();
+    let selectedMonthKey = localStorage.getItem("recovery_selected_month_v1") || getTodayKey().slice(0, 7);
 
     const $ = (id) => document.getElementById(id);
 
@@ -1451,7 +1696,10 @@
       if (!dateKey) return;
       selectedDateKey = dateKey;
       localStorage.setItem("recovery_selected_date_v1", selectedDateKey);
+      selectedMonthKey = selectedDateKey.slice(0, 7);
+      localStorage.setItem("recovery_selected_month_v1", selectedMonthKey);
       updateDateControls();
+      updateMonthControls();
       renderAll();
       if (!silent) showToast(`${formatDateKeyHuman(selectedDateKey)} 기록을 보고 있습니다`);
     }
@@ -1482,6 +1730,66 @@
       if ($("valueMapTitle")) $("valueMapTitle").textContent = `${shortLabel} 행동으로 살아난 가치`;
       if ($("trophySentencesTitle")) $("trophySentencesTitle").textContent = `${dayLabel}의 회복 문장 3개`;
       if ($("dailyReflectionLabel")) $("dailyReflectionLabel").textContent = `${dayLabel} 나를 살린 가장 작은 행동은 무엇이었나요?`;
+    }
+
+
+    function monthKeyToDate(monthKey) {
+      return new Date(`${monthKey}-01T00:00:00`);
+    }
+
+    function getMonthKey(date = new Date()) {
+      const y = date.getFullYear();
+      const m = String(date.getMonth() + 1).padStart(2, "0");
+      return `${y}-${m}`;
+    }
+
+    function formatMonthKeyHuman(monthKey) {
+      const date = monthKeyToDate(monthKey);
+      return new Intl.DateTimeFormat("ko-KR", {
+        year: "numeric",
+        month: "long"
+      }).format(date);
+    }
+
+    function setSelectedMonth(monthKey, silent = false) {
+      if (!monthKey) return;
+      selectedMonthKey = monthKey;
+      localStorage.setItem("recovery_selected_month_v1", selectedMonthKey);
+      updateMonthControls();
+      renderAll();
+      if (!silent) showToast(`${formatMonthKeyHuman(selectedMonthKey)} 달력을 보고 있습니다`);
+    }
+
+    function shiftSelectedMonth(delta) {
+      const date = monthKeyToDate(selectedMonthKey);
+      date.setMonth(date.getMonth() + delta);
+      setSelectedMonth(getMonthKey(date));
+    }
+
+    function goThisMonth() {
+      setSelectedMonth(getMonthKey(new Date()));
+    }
+
+    function syncMonthToSelectedDate() {
+      selectedMonthKey = selectedDateKey.slice(0, 7);
+      localStorage.setItem("recovery_selected_month_v1", selectedMonthKey);
+      updateMonthControls();
+    }
+
+    function updateMonthControls() {
+      if ($("selectedMonthTitle")) $("selectedMonthTitle").textContent = formatMonthKeyHuman(selectedMonthKey);
+    }
+
+    function getMonthRecords() {
+      return loadRecords()
+        .filter((r) => parseTodayKey(r.startAt).startsWith(selectedMonthKey))
+        .sort((a, b) => new Date(a.startAt) - new Date(b.startAt));
+    }
+
+    function summarizeRecords(records) {
+      const totalSec = records.reduce((sum, r) => sum + (r.durationSec || 0), 0);
+      const values = [...new Set(records.flatMap((r) => r.values || []))];
+      return { totalSec, values, count: records.length };
     }
 
 
@@ -1997,7 +2305,9 @@ ${record.trophySentence || "기록 없음"}
       saveRecords(records);
 
       selectedDateKey = record.dateKey || parseTodayKey(record.startAt);
+      selectedMonthKey = selectedDateKey.slice(0, 7);
       localStorage.setItem("recovery_selected_date_v1", selectedDateKey);
+      localStorage.setItem("recovery_selected_month_v1", selectedMonthKey);
 
       activeSession = null;
       pendingEnd = null;
@@ -2479,6 +2789,93 @@ ${recordLines || "기록 없음"}
 사용자에게 맞는 '오늘의 회복 트로피' 문장으로 다듬어주세요.`;
     }
 
+
+    function renderCalendarDashboard() {
+      updateMonthControls();
+
+      const monthRecords = getMonthRecords();
+      const recordsByDate = {};
+      monthRecords.forEach((record) => {
+        const key = parseTodayKey(record.startAt);
+        if (!recordsByDate[key]) recordsByDate[key] = [];
+        recordsByDate[key].push(record);
+      });
+
+      const activeDays = Object.keys(recordsByDate).length;
+      const { totalSec, values, count } = summarizeRecords(monthRecords);
+
+      if ($("monthActiveDays")) $("monthActiveDays").textContent = activeDays;
+      if ($("monthSessionCount")) $("monthSessionCount").textContent = count;
+      if ($("monthTotalTime")) $("monthTotalTime").textContent = formatDurationShort(totalSec);
+      if ($("monthValueCount")) $("monthValueCount").textContent = values.length;
+
+      if ($("monthSentence")) {
+        if (count === 0) {
+          $("monthSentence").textContent = `${formatMonthKeyHuman(selectedMonthKey)}에는 아직 회복 기록이 없습니다. 첫 기록 하나가 이 달의 시작점이 됩니다.`;
+        } else {
+          $("monthSentence").textContent = `${formatMonthKeyHuman(selectedMonthKey)}에는 ${activeDays}일 동안 ${count}개의 회복 세션이 남았습니다. 총 ${formatDurationShort(totalSec)}가 사라지지 않고 기록으로 남았습니다.`;
+        }
+      }
+
+      renderMonthCalendar(recordsByDate);
+    }
+
+    function renderMonthCalendar(recordsByDate) {
+      const grid = $("monthCalendarGrid");
+      if (!grid) return;
+      grid.innerHTML = "";
+
+      const first = monthKeyToDate(selectedMonthKey);
+      const year = first.getFullYear();
+      const month = first.getMonth();
+      const firstDay = first.getDay();
+      const lastDate = new Date(year, month + 1, 0).getDate();
+      const todayKey = getTodayKey();
+
+      for (let i = 0; i < firstDay; i++) {
+        const empty = document.createElement("div");
+        empty.className = "calendar-day empty-day";
+        grid.appendChild(empty);
+      }
+
+      for (let day = 1; day <= lastDate; day++) {
+        const dateKey = `${selectedMonthKey}-${String(day).padStart(2, "0")}`;
+        const records = recordsByDate[dateKey] || [];
+        const { totalSec, values, count } = summarizeRecords(records);
+
+        const cell = document.createElement("button");
+        cell.type = "button";
+        cell.className = "calendar-day";
+        if (records.length > 0) cell.classList.add("has-records");
+        if (dateKey === selectedDateKey) cell.classList.add("selected-day");
+        if (dateKey === todayKey) cell.classList.add("today-day");
+
+        cell.innerHTML = `
+          <div class="day-top">
+            <span class="day-number">${day}</span>
+            ${records.length > 0 ? '<span class="day-dot"></span>' : ''}
+          </div>
+          ${
+            records.length > 0
+              ? `<div class="day-metrics">
+                  <div class="day-metric">${count}회</div>
+                  <div class="day-metric">${formatDurationShort(totalSec)}</div>
+                  <div class="day-metric">가치 ${values.length}개</div>
+                </div>`
+              : `<div class="day-empty-text">여백</div>`
+          }
+        `;
+
+        cell.addEventListener("click", () => {
+          setSelectedDate(dateKey, true);
+          switchTab("today");
+          showToast(`${formatDateKeyHuman(dateKey)} 대시보드로 이동했습니다`);
+        });
+
+        grid.appendChild(cell);
+      }
+    }
+
     function renderRecords() {
       const records = loadRecords();
       const list = $("recordsList");
@@ -2541,6 +2938,7 @@ ${recordLines || "기록 없음"}
       $("startTab").classList.toggle("hidden", tab !== "start");
       $("todayTab").classList.toggle("hidden", tab !== "today");
       $("trophyTab").classList.toggle("hidden", tab !== "trophy");
+      $("calendarTab").classList.toggle("hidden", tab !== "calendar");
       $("recordsTab").classList.toggle("hidden", tab !== "records");
       $("settingsTab").classList.toggle("hidden", tab !== "settings");
       renderAll();
@@ -2723,6 +3121,13 @@ ${recordLines || "기록 없음"}
       document.querySelectorAll(".selected-date-input").forEach((input) => {
         input.addEventListener("change", (event) => setSelectedDate(event.target.value));
       });
+      document.querySelectorAll(".month-prev").forEach((btn) => btn.addEventListener("click", () => shiftSelectedMonth(-1)));
+      document.querySelectorAll(".month-next").forEach((btn) => btn.addEventListener("click", () => shiftSelectedMonth(1)));
+      document.querySelectorAll(".month-today").forEach((btn) => btn.addEventListener("click", goThisMonth));
+      $("goSelectedDateBtn").addEventListener("click", () => {
+        syncMonthToSelectedDate();
+        switchTab("today");
+      });
 
       document.querySelectorAll(".scale-btn").forEach((btn) => {
         btn.addEventListener("click", () => setTimelineScale(btn.dataset.scale));
@@ -2740,6 +3145,7 @@ ${recordLines || "기록 없음"}
       renderCustomEmotionChips();
       renderCustomValueChips();
       updateDateControls();
+      updateMonthControls();
       validateStartForm();
       setupPwa();
       renderAll();
