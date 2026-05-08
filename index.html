@@ -1247,6 +1247,28 @@
       margin-bottom: 0;
     }
 
+  
+    .dictionary-manager {
+      display: grid;
+      gap: 8px;
+      margin: 12px 0;
+    }
+
+    .dictionary-actions {
+      gap: 8px;
+    }
+
+    .dictionary-actions .btn {
+      font-size: 14px;
+      padding: 10px 12px;
+    }
+
+    .dictionary-chips .chip.editing {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
   </style>
 </head>
 
@@ -1281,14 +1303,8 @@
           <div class="field">
             <label>지금 감정</label>
             <div class="chips" id="emotionChips"></div>
-            <div class="hint">내가 추가한 감정 중에서 선택하거나, 새 감정을 직접 추가합니다.</div>
-
-            <div class="custom-add">
-              <input id="customEmotionInput" type="text" placeholder="내 감정 추가: 예) 묘한 불편감, 약간 지침, 혼자 있는 느낌, 집중이 흐림" />
-              <button class="btn secondary" id="addEmotionBtn" type="button">감정 추가</button>
-            </div>
-            <div class="chips custom-selected" id="customEmotionChips"></div>
-          </div>
+            <div class="hint">백업 탭에서 추가한 감정 중에서 선택합니다.</div>
+</div>
 
           <div class="field">
             <label for="actionText">오늘 시작할 작은 행동</label>
@@ -1298,14 +1314,8 @@
           <div class="field">
             <label>연결된 가치</label>
             <div class="chips" id="valueChips"></div>
-            <div class="hint">내가 추가한 가치 중에서 선택하거나, 새 가치를 직접 추가합니다.</div>
-
-            <div class="custom-add">
-              <input id="customValueInput" type="text" placeholder="내 가치 추가: 예) 건강, 관계, 배움, 회복, 자립, 창작, 생활 정돈" />
-              <button class="btn secondary" id="addValueBtn" type="button">가치 추가</button>
-            </div>
-            <div class="chips custom-selected" id="customValueChips"></div>
-          </div>
+            <div class="hint">백업 탭에서 추가한 가치 중에서 선택합니다.</div>
+</div>
 
           <div class="field">
             <label for="difficulty">예상 난이도: <span id="difficultyLabel">3</span>/10</label>
@@ -1447,10 +1457,10 @@
           <h2>정밀 세로 타임라인</h2>
           <div class="timeline-tools">
             <div class="scale-buttons">
-              <button class="scale-btn" data-scale="2">간단 2px/분</button>
-              <button class="scale-btn" data-scale="5">표준 5px/분</button>
-              <button class="scale-btn active" data-scale="10">정밀 10px/분</button>
-              <button class="scale-btn" data-scale="15">초정밀 15px/분</button>
+              <button class="scale-btn" data-scale="2">간단</button>
+              <button class="scale-btn" data-scale="5">표준</button>
+              <button class="scale-btn active" data-scale="10">정밀</button>
+              <button class="scale-btn" data-scale="15">초정밀</button>
             </div>
             <div class="row timeline-jump-row">
               <button class="btn secondary" id="jumpNowBtn">현재 시간으로 이동</button>
@@ -1554,18 +1564,6 @@
             가치는 머릿속 개념으로만 남지 않고, 오늘의 작은 행동을 통해 조금씩 몸으로 내려옵니다.
           </div>
         </div>
-<div class="card">
-          <h2>하루 마무리 질문</h2>
-          <label for="dailyReflection" id="dailyReflectionLabel">선택한 날짜의 마무리 소감</label>
-          <textarea id="dailyReflection" placeholder="오늘의 마무리 소감을 짧게 남겨주세요. 예: 오늘은 작게라도 돌아왔다."></textarea>
-          <div class="reflection-card" id="reflectionDisplay">아직 저장된 마무리 문장이 없습니다.</div>
-          <div class="row">
-            <button class="btn" id="saveReflectionBtn">마무리 문장 저장</button>
-</div>
-          <div class="hint">
-            오늘을 평가하지 않고, 마지막 감각만 짧게 남깁니다.
-          </div>
-        </div>
       </section>
 
 
@@ -1623,12 +1621,28 @@
         <div class="card">
           <h2>내 감정 사전</h2>
           <div class="hint">직접 추가한 감정은 여기에 쌓이고, 다음 기록부터 기본 선택지처럼 다시 사용할 수 있습니다. 삭제하려면 칩을 누르세요.</div>
+          <div class="dictionary-manager">
+            <input id="manageEmotionInput" type="text" placeholder="감정 추가/수정: 예) 괜찮음, 답답함, 집중이 흐림" />
+            <div class="row dictionary-actions">
+              <button class="btn secondary" id="saveEmotionDictBtn" type="button">감정 저장</button>
+              <button class="btn danger" id="deleteEmotionDictBtn" type="button">선택 삭제</button>
+            </div>
+            <div class="hint">칩을 누르면 입력칸에 불러와 수정할 수 있습니다.</div>
+          </div>
           <div class="chips dictionary-chips" id="emotionDictionaryChips"></div>
         </div>
 
         <div class="card">
           <h2>내 가치 사전</h2>
           <div class="hint">직접 추가한 가치는 여기에 쌓이고, 트로피 탭의 가치 지도에도 반영됩니다. 삭제하려면 칩을 누르세요.</div>
+          <div class="dictionary-manager">
+            <input id="manageValueInput" type="text" placeholder="가치 추가/수정: 예) 공부, 몸 돌봄, 회복, 연결" />
+            <div class="row dictionary-actions">
+              <button class="btn secondary" id="saveValueDictBtn" type="button">가치 저장</button>
+              <button class="btn danger" id="deleteValueDictBtn" type="button">선택 삭제</button>
+            </div>
+            <div class="hint">칩을 누르면 입력칸에 불러와 수정할 수 있습니다.</div>
+          </div>
           <div class="chips dictionary-chips" id="valueDictionaryChips"></div>
         </div>
 
@@ -1651,7 +1665,7 @@
 
         <div class="card">
           <h2>PWA 설치 상태</h2>
-          <p class="small"><strong>현재 버전: v15</strong></p>
+          <p class="small"><strong>현재 버전: v16</strong></p>
           <p class="small" id="pwaStatus">설치 상태를 확인 중입니다.</p>
           <div class="row">
             <button class="btn" id="installBtn" disabled>앱 설치하기</button>
@@ -1726,6 +1740,8 @@
     let selectedValues = [];
     let customEmotions = [];
     let customValues = [];
+    let editingEmotion = "";
+    let editingValue = "";
     let selectedReason = "";
     let selectedSensation = "";
     let customReasons = [];
@@ -2301,7 +2317,7 @@
       if (!container) return;
       container.innerHTML = "";
       if (EMOTIONS.length === 0) {
-        container.innerHTML = `<div class="empty inline-empty">아직 감정 선택지가 없습니다. 아래 입력칸에서 내 감정을 먼저 추가해주세요.</div>`;
+        container.innerHTML = `<div class="empty inline-empty">아직 감정 선택지가 없습니다. 백업 탭에서 내 감정을 먼저 추가해주세요.</div>`;
         return;
       }
       makeChips("emotionChips", EMOTIONS, (value) => {
@@ -2315,7 +2331,7 @@
       if (!container) return;
       container.innerHTML = "";
       if (VALUES.length === 0) {
-        container.innerHTML = `<div class="empty inline-empty">아직 가치 선택지가 없습니다. 아래 입력칸에서 내 가치를 먼저 추가해주세요.</div>`;
+        container.innerHTML = `<div class="empty inline-empty">아직 가치 선택지가 없습니다. 백업 탭에서 내 가치를 먼저 추가해주세요.</div>`;
         return;
       }
       makeChips("valueChips", VALUES, (value) => {
@@ -2342,10 +2358,44 @@
       showToast("가치 사전에서 삭제되었습니다");
     }
     function renderDictionaries() {
-      renderDictionaryChips("emotionDictionaryChips", EMOTIONS, removeDictionaryEmotion, "아직 내 감정 사전에 추가된 감정이 없습니다. 시작 탭에서 첫 감정을 추가해보세요.");
-      renderDictionaryChips("valueDictionaryChips", VALUES, removeDictionaryValue, "아직 내 가치 사전에 추가된 가치가 없습니다. 시작 탭에서 첫 가치를 추가해보세요.");
+      renderEditableDictionaryChips("emotionDictionaryChips", EMOTIONS, "emotion", "아직 내 감정 사전에 추가된 감정이 없습니다. 감정을 추가하면 시작 탭에서 선택할 수 있습니다.");
+      renderEditableDictionaryChips("valueDictionaryChips", VALUES, "value", "아직 내 가치 사전에 추가된 가치가 없습니다. 가치를 추가하면 시작 탭에서 선택할 수 있습니다.");
       renderDictionaryChips("reasonDictionaryChips", REASONS, removeDictionaryReason, "아직 내 멈춤/끝냄 이유 사전에 추가된 이유가 없습니다. 종료 화면에서 첫 이유를 추가해보세요.");
       renderDictionaryChips("sensationDictionaryChips", SENSATIONS, removeDictionarySensation, "아직 내 행동 후 감각 사전에 추가된 감각이 없습니다. 종료 화면에서 첫 감각을 추가해보세요.");
+    }
+
+    function renderEditableDictionaryChips(containerId, items, type, emptyText) {
+      const wrap = $(containerId);
+      if (!wrap) return;
+      wrap.innerHTML = "";
+
+      if (!items || items.length === 0) {
+        wrap.innerHTML = `<div class="empty">${emptyText}</div>`;
+        return;
+      }
+
+      items.forEach((item) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "chip selected";
+        const isEditing = type === "emotion" ? editingEmotion === item : editingValue === item;
+        btn.classList.toggle("editing", isEditing);
+        btn.textContent = item;
+        btn.title = "누르면 입력칸에 불러옵니다";
+
+        btn.addEventListener("click", () => {
+          if (type === "emotion") {
+            editingEmotion = item;
+            $("manageEmotionInput").value = item;
+          } else {
+            editingValue = item;
+            $("manageValueInput").value = item;
+          }
+          renderDictionaries();
+        });
+
+        wrap.appendChild(btn);
+      });
     }
 
     function renderDictionaryChips(containerId, items, removeFn, emptyText) {
@@ -2366,6 +2416,76 @@
         wrap.appendChild(btn);
       });
     }
+    
+    function saveEmotionDictionaryItem() {
+      const input = $("manageEmotionInput");
+      if (!input) return;
+      const value = normalizeTagText(input.value);
+      if (!value) return;
+
+      if (editingEmotion && editingEmotion !== value) {
+        EMOTIONS = EMOTIONS.map((item) => item === editingEmotion ? value : item);
+        selectedEmotions = selectedEmotions.map((item) => item === editingEmotion ? value : item);
+      } else if (!EMOTIONS.includes(value)) {
+        EMOTIONS.push(value);
+      }
+
+      EMOTIONS = uniqueArray(EMOTIONS);
+      saveCustomEmotionDictionary();
+      editingEmotion = "";
+      input.value = "";
+      renderEmotionChips();
+      renderDictionaries();
+      updateChipSelection("emotionChips", selectedEmotions);
+      showToast("감정 사전이 저장되었습니다");
+    }
+
+    function saveValueDictionaryItem() {
+      const input = $("manageValueInput");
+      if (!input) return;
+      const value = normalizeTagText(input.value);
+      if (!value) return;
+
+      if (editingValue && editingValue !== value) {
+        VALUES = VALUES.map((item) => item === editingValue ? value : item);
+        selectedValues = selectedValues.map((item) => item === editingValue ? value : item);
+      } else if (!VALUES.includes(value)) {
+        VALUES.push(value);
+      }
+
+      VALUES = uniqueArray(VALUES);
+      saveCustomValueDictionary();
+      editingValue = "";
+      input.value = "";
+      renderValueChips();
+      renderDictionaries();
+      updateChipSelection("valueChips", selectedValues);
+      validateStartForm();
+      showToast("가치 사전이 저장되었습니다");
+    }
+
+    function deleteSelectedEmotionDictionaryItem() {
+      if (!editingEmotion) {
+        showToast("삭제할 감정을 먼저 선택해주세요");
+        return;
+      }
+      removeDictionaryEmotion(editingEmotion);
+      editingEmotion = "";
+      if ($("manageEmotionInput")) $("manageEmotionInput").value = "";
+      renderDictionaries();
+    }
+
+    function deleteSelectedValueDictionaryItem() {
+      if (!editingValue) {
+        showToast("삭제할 가치를 먼저 선택해주세요");
+        return;
+      }
+      removeDictionaryValue(editingValue);
+      editingValue = "";
+      if ($("manageValueInput")) $("manageValueInput").value = "";
+      renderDictionaries();
+    }
+
     function saveSubjectFromInput() {
       setSubject($("subjectText").value);
       showToast("보상 문장 표현이 저장되었습니다");
@@ -3317,21 +3437,23 @@ ${recordLines || "기록 없음"}
       $("actionText").addEventListener("input", validateStartForm);
       if ($("subjectText")) $("subjectText").value = getSubject();
       $("saveSubjectBtn").addEventListener("click", saveSubjectFromInput);
-      $("addEmotionBtn").addEventListener("click", addCustomEmotionFromInput);
-      $("addValueBtn").addEventListener("click", addCustomValueFromInput);
-      $("customEmotionInput").addEventListener("keydown", (event) => {
+      $("saveEmotionDictBtn").addEventListener("click", saveEmotionDictionaryItem);
+      $("deleteEmotionDictBtn").addEventListener("click", deleteSelectedEmotionDictionaryItem);
+      $("saveValueDictBtn").addEventListener("click", saveValueDictionaryItem);
+      $("deleteValueDictBtn").addEventListener("click", deleteSelectedValueDictionaryItem);
+      $("manageEmotionInput").addEventListener("keydown", (event) => {
         if (event.key === "Enter") {
           event.preventDefault();
-          addCustomEmotionFromInput();
+          saveEmotionDictionaryItem();
         }
       });
-      $("customValueInput").addEventListener("keydown", (event) => {
+      $("manageValueInput").addEventListener("keydown", (event) => {
         if (event.key === "Enter") {
           event.preventDefault();
-          addCustomValueFromInput();
+          saveValueDictionaryItem();
         }
       });
-      $("addReasonBtn").addEventListener("click", addCustomReasonFromInput);
+$("addReasonBtn").addEventListener("click", addCustomReasonFromInput);
       $("addSensationBtn").addEventListener("click", addCustomSensationFromInput);
       $("customReasonInput").addEventListener("keydown", (event) => {
         if (event.key === "Enter") {
@@ -3387,7 +3509,6 @@ ${recordLines || "기록 없음"}
       });
       $("jumpNowBtn").addEventListener("click", jumpToNow);
       $("jumpFirstRecordBtn").addEventListener("click", jumpToFirstRecord);
-      $("saveReflectionBtn").addEventListener("click", saveDailyReflection);
 activeSession = loadActive();
       if (activeSession) showActiveView();
       else showIdleView();
