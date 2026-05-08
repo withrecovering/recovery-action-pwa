@@ -1,7 +1,7 @@
 {
   "name": "작은 행동 보상 번역기",
   "short_name": "회복트로피",
-  "description": "트로피 대시보드를 간결하게 정리한 로컬 회복 기록 PWA",
+  "description": "트로피 화면의 부가설명을 줄이고 하루 마무리 소감 중심으로 정리한 로컬 회복 기록 PWA",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

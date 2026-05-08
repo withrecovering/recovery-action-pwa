@@ -1228,7 +1228,26 @@
       color: #fff;
       border-color: var(--accent);
     }
-</style>
+
+    /* v15: 트로피 탭은 핵심 정보만 보이도록 부가설명을 최소화합니다. */
+    #trophyTab .hint,
+    #trophyTab .date-kicker,
+    #trophySubtitle,
+    #trophyDetail,
+    #longestActionDesc,
+    #smallestActionDesc {
+      display: none !important;
+    }
+
+    #trophyTab .summary-highlight {
+      min-height: auto;
+    }
+
+    #trophyTab .summary-title {
+      margin-bottom: 0;
+    }
+
+  </style>
 </head>
 
 <body>
@@ -1537,15 +1556,14 @@
         </div>
 <div class="card">
           <h2>하루 마무리 질문</h2>
-          <label for="dailyReflection" id="dailyReflectionLabel">선택한 날짜에 나를 살린 가장 작은 행동은 무엇이었나요?</label>
-          <textarea id="dailyReflection" placeholder="짧게 한 문장만 적어도 충분합니다. 예: 밥을 챙겨 먹었다."></textarea>
+          <label for="dailyReflection" id="dailyReflectionLabel">선택한 날짜의 마무리 소감</label>
+          <textarea id="dailyReflection" placeholder="오늘의 마무리 소감을 짧게 남겨주세요. 예: 오늘은 작게라도 돌아왔다."></textarea>
           <div class="reflection-card" id="reflectionDisplay">아직 저장된 마무리 문장이 없습니다.</div>
           <div class="row">
             <button class="btn" id="saveReflectionBtn">마무리 문장 저장</button>
-            <button class="btn secondary" id="copyTrophyPromptBtn">오늘 트로피 GPT 프롬프트 복사</button>
-          </div>
+</div>
           <div class="hint">
-            이 질문은 평가가 아니라 회수입니다. 오늘 남은 작은 흔적을 자기편으로 돌려놓는 시간입니다.
+            오늘을 평가하지 않고, 마지막 감각만 짧게 남깁니다.
           </div>
         </div>
       </section>
@@ -1633,7 +1651,7 @@
 
         <div class="card">
           <h2>PWA 설치 상태</h2>
-          <p class="small"><strong>현재 버전: v14</strong></p>
+          <p class="small"><strong>현재 버전: v15</strong></p>
           <p class="small" id="pwaStatus">설치 상태를 확인 중입니다.</p>
           <div class="row">
             <button class="btn" id="installBtn" disabled>앱 설치하기</button>
@@ -1833,7 +1851,7 @@
       if ($("trophyCenterTitle")) $("trophyCenterTitle").textContent = `${dayLabel}의 중심 행동`;
       if ($("timeBucketTitle")) $("timeBucketTitle").textContent = `${dayLabel}의 시간대 요약`;
       if ($("valueMapTitle")) $("valueMapTitle").textContent = `${shortLabel} 행동으로 살아난 가치`;
-      if ($("dailyReflectionLabel")) $("dailyReflectionLabel").textContent = `${dayLabel} 나를 살린 가장 작은 행동은 무엇이었나요?`;
+      if ($("dailyReflectionLabel")) $("dailyReflectionLabel").textContent = `${dayLabel}의 마무리 소감`;
     }
 
 
@@ -3370,9 +3388,7 @@ ${recordLines || "기록 없음"}
       $("jumpNowBtn").addEventListener("click", jumpToNow);
       $("jumpFirstRecordBtn").addEventListener("click", jumpToFirstRecord);
       $("saveReflectionBtn").addEventListener("click", saveDailyReflection);
-      $("copyTrophyPromptBtn").addEventListener("click", () => copyText(buildTrophyPrompt()));
-
-      activeSession = loadActive();
+activeSession = loadActive();
       if (activeSession) showActiveView();
       else showIdleView();
 
