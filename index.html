@@ -858,6 +858,14 @@
     .reflection-card { margin: 10px 0 0; padding: 12px 14px; border-radius: 16px; background: #f8fafc; border: 1px solid var(--line); color: #374151; line-height: 1.55; white-space: pre-wrap; }
     @media (max-width: 680px) { .summary-two-col { grid-template-columns: 1fr; } .time-bucket-grid { grid-template-columns: repeat(2, 1fr); } }
 
+  
+    .inline-empty {
+      width: 100%;
+      padding: 12px;
+      font-size: 13px;
+      text-align: left;
+    }
+
   </style>
 </head>
 
@@ -891,10 +899,10 @@
           <div class="field">
             <label>지금 감정</label>
             <div class="chips" id="emotionChips"></div>
-            <div class="hint">여러 개 선택해도 됩니다.</div>
+            <div class="hint">내가 추가한 감정 중에서 선택하거나, 새 감정을 직접 추가합니다.</div>
 
             <div class="custom-add">
-              <input id="customEmotionInput" type="text" placeholder="직접 감정 추가: 예) 묘한 불편감, 약간 지침, 혼자 있는 느낌, 집중이 흐림" />
+              <input id="customEmotionInput" type="text" placeholder="내 감정 추가: 예) 묘한 불편감, 약간 지침, 혼자 있는 느낌, 집중이 흐림" />
               <button class="btn secondary" id="addEmotionBtn" type="button">감정 추가</button>
             </div>
             <div class="chips custom-selected" id="customEmotionChips"></div>
@@ -908,10 +916,10 @@
           <div class="field">
             <label>연결된 가치</label>
             <div class="chips" id="valueChips"></div>
-            <div class="hint">이 행동이 어떤 삶의 방향과 연결되는지 고릅니다.</div>
+            <div class="hint">내가 추가한 가치 중에서 선택하거나, 새 가치를 직접 추가합니다.</div>
 
             <div class="custom-add">
-              <input id="customValueInput" type="text" placeholder="직접 가치 추가: 예) 건강, 관계, 배움, 회복, 자립, 창작, 생활 정돈" />
+              <input id="customValueInput" type="text" placeholder="내 가치 추가: 예) 건강, 관계, 배움, 회복, 자립, 창작, 생활 정돈" />
               <button class="btn secondary" id="addValueBtn" type="button">가치 추가</button>
             </div>
             <div class="chips custom-selected" id="customValueChips"></div>
@@ -1233,10 +1241,10 @@
     const OLD_ACTIVE_KEY = "minwoo_recovery_active_v1";
 
     const STATES = ["초록불", "노란불", "빨간불"];
-    const BASE_EMOTIONS = ["공허함", "불안", "무기력", "답답함", "외로움", "슬픔", "분노", "죄책감", "평온함", "약간 괜찮음"];
-    const BASE_VALUES = ["몸 돌봄", "회복", "자립", "공부", "연결", "공공성", "창작", "함께 회복", "감각에너지", "자기존중"];
-    let EMOTIONS = [...BASE_EMOTIONS];
-    let VALUES = [...BASE_VALUES];
+    const BASE_EMOTIONS = [];
+    const BASE_VALUES = [];
+    let EMOTIONS = [];
+    let VALUES = [];
     const REASONS = ["지루함", "피로", "불안", "집중 끊김", "외부 일정", "충분히 함", "몸이 힘듦", "기타"];
     const SENSATIONS = ["조금 안정됨", "여전히 힘듦", "몸이 조금 깨어남", "약간 뿌듯함", "별 느낌 없음", "조금 정돈됨", "더 피곤함"];
 
@@ -1326,16 +1334,14 @@
     function loadDictionaries() {
       const storedEmotions = safeParseArray(CUSTOM_EMOTION_DICT_KEY);
       const storedValues = safeParseArray(CUSTOM_VALUE_DICT_KEY);
-      EMOTIONS = uniqueArray([...BASE_EMOTIONS, ...storedEmotions]);
-      VALUES = uniqueArray([...BASE_VALUES, ...storedValues]);
+      EMOTIONS = uniqueArray(storedEmotions);
+      VALUES = uniqueArray(storedValues);
     }
     function saveCustomEmotionDictionary() {
-      const customOnly = EMOTIONS.filter((v) => !BASE_EMOTIONS.includes(v));
-      localStorage.setItem(CUSTOM_EMOTION_DICT_KEY, JSON.stringify(uniqueArray(customOnly)));
+      localStorage.setItem(CUSTOM_EMOTION_DICT_KEY, JSON.stringify(uniqueArray(EMOTIONS)));
     }
     function saveCustomValueDictionary() {
-      const customOnly = VALUES.filter((v) => !BASE_VALUES.includes(v));
-      localStorage.setItem(CUSTOM_VALUE_DICT_KEY, JSON.stringify(uniqueArray(customOnly)));
+      localStorage.setItem(CUSTOM_VALUE_DICT_KEY, JSON.stringify(uniqueArray(VALUES)));
     }
     function getSubject() { return localStorage.getItem(SUBJECT_KEY) || "나는"; }
     function setSubject(value) {
@@ -1410,7 +1416,7 @@
           EMOTIONS.push(tag);
           saveCustomEmotionDictionary();
         }
-        if (!BASE_EMOTIONS.includes(tag) && !customEmotions.includes(tag)) customEmotions.push(tag);
+        if (!customEmotions.includes(tag)) customEmotions.push(tag);
         renderEmotionChips();
         renderCustomEmotionChips();
         renderDictionaries();
@@ -1424,7 +1430,7 @@
           VALUES.push(tag);
           saveCustomValueDictionary();
         }
-        if (!BASE_VALUES.includes(tag) && !customValues.includes(tag)) customValues.push(tag);
+        if (!customValues.includes(tag)) customValues.push(tag);
         renderValueChips();
         renderCustomValueChips();
         renderDictionaries();
@@ -1504,6 +1510,13 @@
     }
 
     function renderEmotionChips() {
+      const container = $("emotionChips");
+      if (!container) return;
+      container.innerHTML = "";
+      if (EMOTIONS.length === 0) {
+        container.innerHTML = `<div class="empty inline-empty">아직 감정 선택지가 없습니다. 아래 입력칸에서 내 감정을 먼저 추가해주세요.</div>`;
+        return;
+      }
       makeChips("emotionChips", EMOTIONS, (value) => {
         selectedEmotions = toggleArray(selectedEmotions, value);
         updateChipSelection("emotionChips", selectedEmotions);
@@ -1511,6 +1524,13 @@
       updateChipSelection("emotionChips", selectedEmotions);
     }
     function renderValueChips() {
+      const container = $("valueChips");
+      if (!container) return;
+      container.innerHTML = "";
+      if (VALUES.length === 0) {
+        container.innerHTML = `<div class="empty inline-empty">아직 가치 선택지가 없습니다. 아래 입력칸에서 내 가치를 먼저 추가해주세요.</div>`;
+        return;
+      }
       makeChips("valueChips", VALUES, (value) => {
         selectedValues = toggleArray(selectedValues, value);
         updateChipSelection("valueChips", selectedValues);
@@ -1540,7 +1560,7 @@
       if (emotionWrap) {
         const customOnly = EMOTIONS.filter((v) => !BASE_EMOTIONS.includes(v));
         emotionWrap.innerHTML = "";
-        if (customOnly.length === 0) emotionWrap.innerHTML = `<div class="empty">직접 추가한 감정이 아직 없습니다.</div>`;
+        if (customOnly.length === 0) emotionWrap.innerHTML = `<div class="empty">아직 내 감정 사전에 추가된 감정이 없습니다. 시작 탭에서 첫 감정을 추가해보세요.</div>`;
         else customOnly.forEach((item) => {
           const btn = document.createElement("button");
           btn.type = "button"; btn.className = "chip selected"; btn.textContent = item;
@@ -1552,7 +1572,7 @@
       if (valueWrap) {
         const customOnly = VALUES.filter((v) => !BASE_VALUES.includes(v));
         valueWrap.innerHTML = "";
-        if (customOnly.length === 0) valueWrap.innerHTML = `<div class="empty">직접 추가한 가치가 아직 없습니다.</div>`;
+        if (customOnly.length === 0) valueWrap.innerHTML = `<div class="empty">아직 내 가치 사전에 추가된 가치가 없습니다. 시작 탭에서 첫 가치를 추가해보세요.</div>`;
         else customOnly.forEach((item) => {
           const btn = document.createElement("button");
           btn.type = "button"; btn.className = "chip selected"; btn.textContent = item;

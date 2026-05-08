@@ -1,7 +1,7 @@
 {
   "name": "작은 행동 보상 번역기",
-  "short_name": "회복기록",
-  "description": "개인화 사전과 하루 회복 트로피로 작은 행동의 의미를 남기는 로컬 PWA",
+  "short_name": "내회복기록",
+  "description": "기본값 없이 나만의 감정과 가치 사전으로 작은 행동을 기록하는 로컬 PWA",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
