@@ -1222,6 +1222,13 @@
       }
     }
 
+  
+    .chip.single-selected {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
   </style>
 </head>
 
@@ -1641,7 +1648,7 @@
 
         <div class="card">
           <h2>PWA 설치 상태</h2>
-          <p class="small"><strong>현재 버전: v11</strong></p>
+          <p class="small"><strong>현재 버전: v11.1</strong></p>
           <p class="small" id="pwaStatus">설치 상태를 확인 중입니다.</p>
           <div class="row">
             <button class="btn" id="installBtn" disabled>앱 설치하기</button>
@@ -1944,11 +1951,11 @@
     }
 
     function saveCustomReasonDictionary() {
-      localStorage.setItem(CUSTOM_REASON_DICT_KEY, JSON.stringify(uniqueArray(REASONS)));
+      saveArrayToStorage(CUSTOM_REASON_DICT_KEY, REASONS);
     }
 
     function saveCustomSensationDictionary() {
-      localStorage.setItem(CUSTOM_SENSATION_DICT_KEY, JSON.stringify(uniqueArray(SENSATIONS)));
+      saveArrayToStorage(CUSTOM_SENSATION_DICT_KEY, SENSATIONS);
     }
 
     function getSubject() { return localStorage.getItem(SUBJECT_KEY) || "나는"; }
@@ -2008,6 +2015,21 @@
         const isSelected = Array.isArray(selected) ? selected.includes(value) : selected === value;
         child.classList.toggle("selected", isSelected);
       });
+    }
+
+    function updateSingleChipSelection(containerId, selectedValue) {
+      const container = $(containerId);
+      if (!container) return;
+      [...container.children].forEach((child) => {
+        const value = child.dataset.value;
+        const isSelected = Boolean(selectedValue && value === selectedValue);
+        child.classList.toggle("selected", isSelected);
+        child.classList.toggle("single-selected", isSelected);
+      });
+    }
+
+    function saveArrayToStorage(key, arr) {
+      localStorage.setItem(key, JSON.stringify(uniqueArray(arr || [])));
     }
 
     function normalizeTagText(text) {
@@ -2150,110 +2172,124 @@
     function addCustomReasonFromInput() {
       const input = $("customReasonInput");
       if (!input) return;
-      const ok = addUniqueTag("reason", input.value);
-      if (ok) {
-        input.value = "";
-        showToast("멈춤/끝냄 이유가 추가되었습니다");
+      const tag = normalizeTagText(input.value);
+      if (!tag) return;
+
+      selectedReason = tag;
+      if (!REASONS.includes(tag)) {
+        REASONS.push(tag);
+        saveCustomReasonDictionary();
       }
+
+      input.value = "";
+      renderReasonChips();
+      renderDictionaries();
+      updateSingleChipSelection("reasonChips", selectedReason);
+      if (pendingEnd) $("rewardText").value = generateRewardSentence(pendingEnd, selectedReason, selectedSensation);
+      showToast("멈춤/끝냄 이유가 추가되었습니다");
     }
 
     function addCustomSensationFromInput() {
       const input = $("customSensationInput");
       if (!input) return;
-      const ok = addUniqueTag("sensation", input.value);
-      if (ok) {
-        input.value = "";
-        showToast("행동 후 감각이 추가되었습니다");
+      const tag = normalizeTagText(input.value);
+      if (!tag) return;
+
+      selectedSensation = tag;
+      if (!SENSATIONS.includes(tag)) {
+        SENSATIONS.push(tag);
+        saveCustomSensationDictionary();
       }
+
+      input.value = "";
+      renderSensationChips();
+      renderDictionaries();
+      updateSingleChipSelection("sensationChips", selectedSensation);
+      if (pendingEnd) $("rewardText").value = generateRewardSentence(pendingEnd, selectedReason, selectedSensation);
+      showToast("행동 후 감각이 추가되었습니다");
     }
 
     function renderReasonChips() {
       const container = $("reasonChips");
       if (!container) return;
       container.innerHTML = "";
-      if (REASONS.length === 0) {
+
+      if (!REASONS || REASONS.length === 0) {
         container.innerHTML = `<div class="empty inline-empty">아직 멈춤/끝냄 이유 선택지가 없습니다. 아래 입력칸에서 내 이유를 먼저 추가해주세요.</div>`;
         return;
       }
-      renderReasonChips();
-      updateChipSelection("reasonChips", selectedReason);
+
+      REASONS.forEach((item) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "chip";
+        button.textContent = item;
+        button.dataset.value = item;
+        button.addEventListener("click", () => {
+          selectedReason = selectedReason === item ? "" : item;
+          updateSingleChipSelection("reasonChips", selectedReason);
+          if (pendingEnd) $("rewardText").value = generateRewardSentence(pendingEnd, selectedReason, selectedSensation);
+        });
+        container.appendChild(button);
+      });
+
+      updateSingleChipSelection("reasonChips", selectedReason);
     }
 
     function renderSensationChips() {
       const container = $("sensationChips");
       if (!container) return;
       container.innerHTML = "";
-      if (SENSATIONS.length === 0) {
+
+      if (!SENSATIONS || SENSATIONS.length === 0) {
         container.innerHTML = `<div class="empty inline-empty">아직 행동 후 감각 선택지가 없습니다. 아래 입력칸에서 내 감각을 먼저 추가해주세요.</div>`;
         return;
       }
-      renderSensationChips();
-      updateChipSelection("sensationChips", selectedSensation);
+
+      SENSATIONS.forEach((item) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "chip";
+        button.textContent = item;
+        button.dataset.value = item;
+        button.addEventListener("click", () => {
+          selectedSensation = selectedSensation === item ? "" : item;
+          updateSingleChipSelection("sensationChips", selectedSensation);
+          if (pendingEnd) $("rewardText").value = generateRewardSentence(pendingEnd, selectedReason, selectedSensation);
+        });
+        container.appendChild(button);
+      });
+
+      updateSingleChipSelection("sensationChips", selectedSensation);
     }
 
     function renderCustomReasonChips() {
       const container = $("customReasonChips");
-      if (!container) return;
-      container.innerHTML = "";
-      customReasons.forEach((item) => {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "chip selected";
-        button.textContent = item;
-        button.dataset.value = item;
-        button.title = "누르면 이번 기록에서 제거됩니다";
-        button.addEventListener("click", () => {
-          if (selectedReason === item) selectedReason = "";
-          customReasons = customReasons.filter((v) => v !== item);
-          renderCustomReasonChips();
-          renderReasonChips();
-          if (pendingEnd) $("rewardText").value = generateRewardSentence(pendingEnd, selectedReason, selectedSensation);
-        });
-        container.appendChild(button);
-      });
+      if (container) container.innerHTML = "";
     }
 
     function renderCustomSensationChips() {
       const container = $("customSensationChips");
-      if (!container) return;
-      container.innerHTML = "";
-      customSensations.forEach((item) => {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "chip selected";
-        button.textContent = item;
-        button.dataset.value = item;
-        button.title = "누르면 이번 기록에서 제거됩니다";
-        button.addEventListener("click", () => {
-          if (selectedSensation === item) selectedSensation = "";
-          customSensations = customSensations.filter((v) => v !== item);
-          renderCustomSensationChips();
-          renderSensationChips();
-          if (pendingEnd) $("rewardText").value = generateRewardSentence(pendingEnd, selectedReason, selectedSensation);
-        });
-        container.appendChild(button);
-      });
+      if (container) container.innerHTML = "";
     }
 
     function removeDictionaryReason(value) {
       REASONS = REASONS.filter((v) => v !== value);
       if (selectedReason === value) selectedReason = "";
-      customReasons = customReasons.filter((v) => v !== value);
       saveCustomReasonDictionary();
       renderReasonChips();
-      renderCustomReasonChips();
       renderDictionaries();
+      if (pendingEnd) $("rewardText").value = generateRewardSentence(pendingEnd, selectedReason, selectedSensation);
       showToast("이유 사전에서 삭제되었습니다");
     }
 
     function removeDictionarySensation(value) {
       SENSATIONS = SENSATIONS.filter((v) => v !== value);
       if (selectedSensation === value) selectedSensation = "";
-      customSensations = customSensations.filter((v) => v !== value);
       saveCustomSensationDictionary();
       renderSensationChips();
-      renderCustomSensationChips();
       renderDictionaries();
+      if (pendingEnd) $("rewardText").value = generateRewardSentence(pendingEnd, selectedReason, selectedSensation);
       showToast("감각 사전에서 삭제되었습니다");
     }
 
@@ -2448,7 +2484,7 @@
         : "뚜렷하게 이름 붙이기 어려운 감정";
 
       const endPhrase = session.endType === "완료" ? "완료로 기록했다" : "여기까지 한 만큼을 기록했다";
-      const reasonPhrase = reason ? `${reason} 때문에 멈췄거나 마무리했지만,` : "멈춘 이유가 아직 명확하지 않아도,";
+      const reasonPhrase = reason ? `${reason} 때문에 멈췄거나 마무리했지만,` : "멈춘 이유를 아직 이름 붙이지 못해도,";
       const sensationPhrase = sensation ? `행동 후 감각은 '${sensation}'으로 남았다.` : "행동 후 감각은 아직 더 관찰해도 괜찮다.";
 
       const subject = getSubject();

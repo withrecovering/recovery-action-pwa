@@ -1,4 +1,4 @@
-const CACHE_NAME = "minwoo-recovery-pwa-v11";
+const CACHE_NAME = "minwoo-recovery-pwa-v11-1";
 const APP_SHELL = [
   "./",
   "./index.html",
