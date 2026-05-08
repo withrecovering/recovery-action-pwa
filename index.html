@@ -841,6 +841,23 @@
       }
     }
 
+  
+    .dictionary-chips { margin-top: 12px; }
+    .dictionary-chips .chip { background: #f8fafc; border-style: dashed; }
+    .dictionary-chips .chip::after { content: " ×"; opacity: 0.75; font-weight: 950; }
+    .summary-two-col { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .summary-highlight { background: #f8fafc; border: 1px solid var(--line); border-radius: 18px; padding: 14px; min-height: 118px; }
+    .summary-kicker { color: var(--accent); font-size: 13px; font-weight: 950; margin-bottom: 6px; }
+    .summary-title { font-size: 18px; line-height: 1.35; font-weight: 950; letter-spacing: -0.03em; margin-bottom: 6px; }
+    .summary-desc { color: var(--muted); font-size: 13px; line-height: 1.5; }
+    .time-bucket-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 8px; }
+    .time-bucket { border: 1px solid var(--line); border-radius: 18px; background: #fff; padding: 13px; }
+    .time-bucket-name { font-size: 13px; color: var(--muted); font-weight: 900; margin-bottom: 5px; }
+    .time-bucket-count { color: var(--accent); font-size: 24px; font-weight: 950; font-variant-numeric: tabular-nums; line-height: 1.1; }
+    .time-bucket-sub { font-size: 12px; color: var(--muted); margin-top: 4px; line-height: 1.35; }
+    .reflection-card { margin: 10px 0 0; padding: 12px 14px; border-radius: 16px; background: #f8fafc; border: 1px solid var(--line); color: #374151; line-height: 1.55; white-space: pre-wrap; }
+    @media (max-width: 680px) { .summary-two-col { grid-template-columns: 1fr; } .time-bucket-grid { grid-template-columns: repeat(2, 1fr); } }
+
   </style>
 </head>
 
@@ -877,7 +894,7 @@
             <div class="hint">여러 개 선택해도 됩니다.</div>
 
             <div class="custom-add">
-              <input id="customEmotionInput" type="text" placeholder="직접 감정 추가: 예) 교감 결핍, 약간 붕 뜸, 방향감 흐림" />
+              <input id="customEmotionInput" type="text" placeholder="직접 감정 추가: 예) 묘한 불편감, 약간 지침, 혼자 있는 느낌, 집중이 흐림" />
               <button class="btn secondary" id="addEmotionBtn" type="button">감정 추가</button>
             </div>
             <div class="chips custom-selected" id="customEmotionChips"></div>
@@ -885,7 +902,7 @@
 
           <div class="field">
             <label for="actionText">오늘 시작할 작은 행동</label>
-            <input id="actionText" type="text" placeholder="예: 치유농업사 교재 1쪽 보기, 근력운동 1세트, 물 마시기" />
+            <input id="actionText" type="text" placeholder="예: 물 한 잔 마시기, 식사하기, 3분 걷기, 책 한 쪽 보기, 오늘 할 일 하나 시작하기" />
           </div>
 
           <div class="field">
@@ -894,7 +911,7 @@
             <div class="hint">이 행동이 어떤 삶의 방향과 연결되는지 고릅니다.</div>
 
             <div class="custom-add">
-              <input id="customValueInput" type="text" placeholder="직접 가치 추가: 예) 미래 현장성, 신경계 안정, 치유농업 준비" />
+              <input id="customValueInput" type="text" placeholder="직접 가치 추가: 예) 건강, 관계, 배움, 회복, 자립, 창작, 생활 정돈" />
               <button class="btn secondary" id="addValueBtn" type="button">가치 추가</button>
             </div>
             <div class="chips custom-selected" id="customValueChips"></div>
@@ -1070,6 +1087,29 @@
           </div>
         </div>
 
+
+        <div class="card">
+          <h2>오늘의 중심 행동</h2>
+          <div class="summary-two-col">
+            <div class="summary-highlight">
+              <div class="summary-kicker">가장 오래 남은 행동</div>
+              <div class="summary-title" id="longestActionTitle">아직 기록이 없습니다.</div>
+              <div class="summary-desc" id="longestActionDesc">기록이 생기면 오늘 가장 오래 머문 행동이 표시됩니다.</div>
+            </div>
+            <div class="summary-highlight">
+              <div class="summary-kicker">가장 작은 회복 행동</div>
+              <div class="summary-title" id="smallestActionTitle">아직 기록이 없습니다.</div>
+              <div class="summary-desc" id="smallestActionDesc">짧은 행동도 정확히 그만큼 존중받습니다.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>오늘의 시간대 요약</h2>
+          <div class="time-bucket-grid" id="timeBucketGrid"></div>
+          <div class="hint">시간대 요약은 평가가 아니라 패턴 관찰입니다. 비어 있는 시간대는 실패가 아니라 여백입니다.</div>
+        </div>
+
         <div class="card">
           <h2>오늘 행동으로 살아난 가치</h2>
           <div id="trophyValueMap" class="value-map"></div>
@@ -1088,7 +1128,8 @@
         <div class="card">
           <h2>하루 마무리 질문</h2>
           <label for="dailyReflection">오늘 나를 살린 가장 작은 행동은 무엇이었나요?</label>
-          <textarea id="dailyReflection" placeholder="짧게 한 문장만 적어도 충분합니다. 예: 교재를 4분 읽었다."></textarea>
+          <textarea id="dailyReflection" placeholder="짧게 한 문장만 적어도 충분합니다. 예: 밥을 챙겨 먹었다."></textarea>
+          <div class="reflection-card" id="reflectionDisplay">아직 저장된 마무리 문장이 없습니다.</div>
           <div class="row">
             <button class="btn" id="saveReflectionBtn">마무리 문장 저장</button>
             <button class="btn secondary" id="copyTrophyPromptBtn">오늘 트로피 GPT 프롬프트 복사</button>
@@ -1107,6 +1148,31 @@
       </section>
 
       <section id="settingsTab" class="hidden">
+
+        <div class="card">
+          <h2>개인화 설정</h2>
+          <div class="field">
+            <label for="subjectText">보상 문장에서 사용할 표현</label>
+            <input id="subjectText" type="text" placeholder="예: 나는, 민우는, 오늘의 나는" />
+            <div class="hint">보상 문장과 GPT 프롬프트에 들어갈 주어입니다. 기본값은 “나는”입니다.</div>
+          </div>
+          <div class="row">
+            <button class="btn" id="saveSubjectBtn">표현 저장</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>내 감정 사전</h2>
+          <div class="hint">직접 추가한 감정은 여기에 쌓이고, 다음 기록부터 기본 선택지처럼 다시 사용할 수 있습니다. 삭제하려면 칩을 누르세요.</div>
+          <div class="chips dictionary-chips" id="emotionDictionaryChips"></div>
+        </div>
+
+        <div class="card">
+          <h2>내 가치 사전</h2>
+          <div class="hint">직접 추가한 가치는 여기에 쌓이고, 트로피 탭의 가치 지도에도 반영됩니다. 삭제하려면 칩을 누르세요.</div>
+          <div class="chips dictionary-chips" id="valueDictionaryChips"></div>
+        </div>
+
         <div class="card">
           <h2>PWA 설치 상태</h2>
           <p class="small" id="pwaStatus">설치 상태를 확인 중입니다.</p>
@@ -1161,11 +1227,16 @@
     const OLD_STORAGE_KEY = "minwoo_recovery_records_v1";
     const ACTIVE_KEY = "minwoo_recovery_active_v2";
     const REFLECTION_KEY = "minwoo_daily_reflection_v1";
+    const SUBJECT_KEY = "recovery_app_subject_v1";
+    const CUSTOM_EMOTION_DICT_KEY = "recovery_app_custom_emotions_v1";
+    const CUSTOM_VALUE_DICT_KEY = "recovery_app_custom_values_v1";
     const OLD_ACTIVE_KEY = "minwoo_recovery_active_v1";
 
     const STATES = ["초록불", "노란불", "빨간불"];
-    const EMOTIONS = ["공허함", "불안", "무기력", "답답함", "외로움", "슬픔", "분노", "죄책감", "평온함", "약간 괜찮음"];
-    const VALUES = ["몸 돌봄", "회복", "자립", "공부", "연결", "공공성", "창작", "함께 회복", "감각에너지", "자기존중"];
+    const BASE_EMOTIONS = ["공허함", "불안", "무기력", "답답함", "외로움", "슬픔", "분노", "죄책감", "평온함", "약간 괜찮음"];
+    const BASE_VALUES = ["몸 돌봄", "회복", "자립", "공부", "연결", "공공성", "창작", "함께 회복", "감각에너지", "자기존중"];
+    let EMOTIONS = [...BASE_EMOTIONS];
+    let VALUES = [...BASE_VALUES];
     const REASONS = ["지루함", "피로", "불안", "집중 끊김", "외부 일정", "충분히 함", "몸이 힘듦", "기타"];
     const SENSATIONS = ["조금 안정됨", "여전히 힘듦", "몸이 조금 깨어남", "약간 뿌듯함", "별 느낌 없음", "조금 정돈됨", "더 피곤함"];
 
@@ -1247,6 +1318,32 @@
       }
     }
 
+    function safeParseArray(key) {
+      try { const parsed = JSON.parse(localStorage.getItem(key)); return Array.isArray(parsed) ? parsed : []; }
+      catch { return []; }
+    }
+    function uniqueArray(arr) { return [...new Set(arr.map((v) => normalizeTagText(String(v))).filter(Boolean))]; }
+    function loadDictionaries() {
+      const storedEmotions = safeParseArray(CUSTOM_EMOTION_DICT_KEY);
+      const storedValues = safeParseArray(CUSTOM_VALUE_DICT_KEY);
+      EMOTIONS = uniqueArray([...BASE_EMOTIONS, ...storedEmotions]);
+      VALUES = uniqueArray([...BASE_VALUES, ...storedValues]);
+    }
+    function saveCustomEmotionDictionary() {
+      const customOnly = EMOTIONS.filter((v) => !BASE_EMOTIONS.includes(v));
+      localStorage.setItem(CUSTOM_EMOTION_DICT_KEY, JSON.stringify(uniqueArray(customOnly)));
+    }
+    function saveCustomValueDictionary() {
+      const customOnly = VALUES.filter((v) => !BASE_VALUES.includes(v));
+      localStorage.setItem(CUSTOM_VALUE_DICT_KEY, JSON.stringify(uniqueArray(customOnly)));
+    }
+    function getSubject() { return localStorage.getItem(SUBJECT_KEY) || "나는"; }
+    function setSubject(value) {
+      const subject = normalizeTagText(value) || "나는";
+      localStorage.setItem(SUBJECT_KEY, subject);
+      if ($("subjectText")) $("subjectText").value = subject;
+    }
+
     function loadRecords() {
       try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
       catch { return []; }
@@ -1309,16 +1406,28 @@
 
       if (targetArrayName === "emotion") {
         if (!selectedEmotions.includes(tag)) selectedEmotions.push(tag);
-        if (!EMOTIONS.includes(tag) && !customEmotions.includes(tag)) customEmotions.push(tag);
+        if (!EMOTIONS.includes(tag)) {
+          EMOTIONS.push(tag);
+          saveCustomEmotionDictionary();
+        }
+        if (!BASE_EMOTIONS.includes(tag) && !customEmotions.includes(tag)) customEmotions.push(tag);
+        renderEmotionChips();
         renderCustomEmotionChips();
+        renderDictionaries();
         updateChipSelection("emotionChips", selectedEmotions);
         return true;
       }
 
       if (targetArrayName === "value") {
         if (!selectedValues.includes(tag)) selectedValues.push(tag);
-        if (!VALUES.includes(tag) && !customValues.includes(tag)) customValues.push(tag);
+        if (!VALUES.includes(tag)) {
+          VALUES.push(tag);
+          saveCustomValueDictionary();
+        }
+        if (!BASE_VALUES.includes(tag) && !customValues.includes(tag)) customValues.push(tag);
+        renderValueChips();
         renderCustomValueChips();
+        renderDictionaries();
         updateChipSelection("valueChips", selectedValues);
         validateStartForm();
         return true;
@@ -1392,6 +1501,71 @@
         input.value = "";
         showToast("직접 가치가 추가되었습니다");
       }
+    }
+
+    function renderEmotionChips() {
+      makeChips("emotionChips", EMOTIONS, (value) => {
+        selectedEmotions = toggleArray(selectedEmotions, value);
+        updateChipSelection("emotionChips", selectedEmotions);
+      });
+      updateChipSelection("emotionChips", selectedEmotions);
+    }
+    function renderValueChips() {
+      makeChips("valueChips", VALUES, (value) => {
+        selectedValues = toggleArray(selectedValues, value);
+        updateChipSelection("valueChips", selectedValues);
+        validateStartForm();
+      });
+      updateChipSelection("valueChips", selectedValues);
+    }
+    function removeDictionaryEmotion(value) {
+      EMOTIONS = EMOTIONS.filter((v) => v !== value);
+      selectedEmotions = selectedEmotions.filter((v) => v !== value);
+      customEmotions = customEmotions.filter((v) => v !== value);
+      saveCustomEmotionDictionary();
+      renderEmotionChips(); renderCustomEmotionChips(); renderDictionaries();
+      showToast("감정 사전에서 삭제되었습니다");
+    }
+    function removeDictionaryValue(value) {
+      VALUES = VALUES.filter((v) => v !== value);
+      selectedValues = selectedValues.filter((v) => v !== value);
+      customValues = customValues.filter((v) => v !== value);
+      saveCustomValueDictionary();
+      renderValueChips(); renderCustomValueChips(); renderDictionaries(); validateStartForm();
+      showToast("가치 사전에서 삭제되었습니다");
+    }
+    function renderDictionaries() {
+      const emotionWrap = $("emotionDictionaryChips");
+      const valueWrap = $("valueDictionaryChips");
+      if (emotionWrap) {
+        const customOnly = EMOTIONS.filter((v) => !BASE_EMOTIONS.includes(v));
+        emotionWrap.innerHTML = "";
+        if (customOnly.length === 0) emotionWrap.innerHTML = `<div class="empty">직접 추가한 감정이 아직 없습니다.</div>`;
+        else customOnly.forEach((item) => {
+          const btn = document.createElement("button");
+          btn.type = "button"; btn.className = "chip selected"; btn.textContent = item;
+          btn.title = "누르면 사전에서 삭제됩니다";
+          btn.addEventListener("click", () => removeDictionaryEmotion(item));
+          emotionWrap.appendChild(btn);
+        });
+      }
+      if (valueWrap) {
+        const customOnly = VALUES.filter((v) => !BASE_VALUES.includes(v));
+        valueWrap.innerHTML = "";
+        if (customOnly.length === 0) valueWrap.innerHTML = `<div class="empty">직접 추가한 가치가 아직 없습니다.</div>`;
+        else customOnly.forEach((item) => {
+          const btn = document.createElement("button");
+          btn.type = "button"; btn.className = "chip selected"; btn.textContent = item;
+          btn.title = "누르면 사전에서 삭제됩니다";
+          btn.addEventListener("click", () => removeDictionaryValue(item));
+          valueWrap.appendChild(btn);
+        });
+      }
+    }
+    function saveSubjectFromInput() {
+      setSubject($("subjectText").value);
+      showToast("보상 문장 표현이 저장되었습니다");
+      renderAll();
     }
 
     function toggleArray(arr, value) {
@@ -1507,7 +1681,9 @@
       const reasonPhrase = reason ? `${reason} 때문에 멈췄거나 마무리했지만,` : "멈춘 이유가 아직 명확하지 않아도,";
       const sensationPhrase = sensation ? `행동 후 감각은 '${sensation}'으로 남았다.` : "행동 후 감각은 아직 더 관찰해도 괜찮다.";
 
-      return `민우는 ${session.stateBefore} 상태와 ${emotions} 속에서도 '${session.actionText}'을/를 ${duration} 동안 시도했고, ${endPhrase}.
+      const subject = getSubject();
+
+      return `${subject} ${session.stateBefore} 상태와 ${emotions} 속에서도 '${session.actionText}'을/를 ${duration} 동안 시도했고, ${endPhrase}.
 
 이 행동은 작아 보여도 ${values}이라는 가치를 몸으로 번역한 회복 행동이다.
 
@@ -1515,7 +1691,7 @@ ${reasonPhrase} 이것은 실패가 아니라 시작하고, 알아차리고, 멈
 
 ${sensationPhrase}
 
-오늘 민우는 자신을 완전히 버리지 않았다.`;
+오늘의 나는 자신을 완전히 버리지 않았다.`;
     }
 
     function generateTrophySentence(session) {
@@ -1528,7 +1704,7 @@ ${sensationPhrase}
       const reward = $("rewardText").value.trim();
       const trophy = $("trophyText").value.trim();
 
-      return `아래는 민우가 로컬 회복 행동 기록 앱에 남긴 작은 행동 기록입니다.
+      return `아래는 사용자가 로컬 회복 행동 기록 앱에 남긴 작은 행동 기록입니다.
 
 목표:
 - 이 행동을 과장하지 않고, 하찮게 만들지도 말아주세요.
@@ -1538,6 +1714,7 @@ ${sensationPhrase}
 - 문장은 3~5문장 정도로 정리해주세요.
 
 기록:
+- 보상 문장에서 사용할 표현: ${getSubject()}
 - 시작 시간: ${formatDateTime(recordLike.startAt)}
 - 끝 시간: ${formatDateTime(recordLike.endAt)}
 - 지속 시간: ${formatDurationShort(recordLike.durationSec)}
@@ -1555,11 +1732,11 @@ ${reward}
 현재 증거 문장:
 ${trophy}
 
-이 기록을 민우에게 맞는 보상 문장으로 다듬어주세요.`;
+이 기록을 사용자에게 맞는 보상 문장으로 다듬어주세요.`;
     }
 
     function buildGptPromptFromRecord(record) {
-      return `아래는 민우가 로컬 회복 행동 기록 앱에 남긴 작은 행동 기록입니다.
+      return `아래는 사용자가 로컬 회복 행동 기록 앱에 남긴 작은 행동 기록입니다.
 
 목표:
 - 이 행동을 과장하지 않고, 하찮게 만들지도 말아주세요.
@@ -1569,6 +1746,7 @@ ${trophy}
 - 문장은 3~5문장 정도로 정리해주세요.
 
 기록:
+- 보상 문장에서 사용할 표현: ${getSubject()}
 - 시작 시간: ${formatDateTime(record.startAt)}
 - 끝 시간: ${formatDateTime(record.endAt)}
 - 지속 시간: ${formatDurationShort(record.durationSec)}
@@ -1586,7 +1764,7 @@ ${record.rewardSentence || "기록 없음"}
 현재 증거 문장:
 ${record.trophySentence || "기록 없음"}
 
-이 기록을 민우에게 맞는 보상 문장으로 다듬어주세요.`;
+이 기록을 사용자에게 맞는 보상 문장으로 다듬어주세요.`;
     }
 
     async function copyText(text) {
@@ -1680,9 +1858,9 @@ ${record.trophySentence || "기록 없음"}
       if (todayRecords.length === 0) {
         $("todaySentence").textContent = "오늘의 작은 행동이 아직 기록되지 않았습니다. 첫 30초도 충분히 기록이 됩니다.";
       } else if (todayRecords.length === 1) {
-        $("todaySentence").textContent = "오늘 민우는 1번 삶의 방향으로 돌아왔다.";
+        $("todaySentence").textContent = "오늘 나는 1번 삶의 방향으로 돌아왔다.";
       } else {
-        $("todaySentence").textContent = `오늘 민우는 ${todayRecords.length}번 삶의 방향으로 돌아왔다. 끊김보다 중요한 것은 다시 시작한 흔적이다.`;
+        $("todaySentence").textContent = `오늘 나는 ${todayRecords.length}번 삶의 방향으로 돌아왔다. 끊김보다 중요한 것은 다시 시작한 흔적이다.`;
       }
 
       renderDaybar(todayRecords);
@@ -1917,13 +2095,16 @@ ${record.trophySentence || "기록 없음"}
         $("trophyDetail").textContent = "오늘의 기록이 아직 없습니다.";
         $("trophyValueMap").innerHTML = `<div class="empty">오늘 접촉한 가치가 아직 없습니다.</div>`;
         $("trophySentences").innerHTML = `<li>첫 30초의 시작도 충분히 오늘의 트로피가 될 수 있습니다.</li>`;
+        renderTrophyHighlights([]);
+        renderTimeBuckets([]);
+        renderReflectionDisplay(reflection);
         return;
       }
 
       const mostValue = values.sort((a, b) => valueCounts[b] - valueCounts[a])[0];
       const title = records.length === 1
-        ? "오늘 민우는 1번 삶의 방향으로 돌아왔다."
-        : `오늘 민우는 ${records.length}번 삶의 방향으로 돌아왔다.`;
+        ? "오늘 나는 1번 삶의 방향으로 돌아왔다."
+        : `오늘 나는 ${records.length}번 삶의 방향으로 돌아왔다.`;
 
       $("trophyTitle").textContent = title;
 
@@ -1946,7 +2127,61 @@ ${record.trophySentence || "기록 없음"}
       $("trophyDetail").textContent = detailLines.join("\n");
 
       renderTrophyValueMap(valueCounts);
+      renderTrophyHighlights(records);
+      renderTimeBuckets(records);
+      renderReflectionDisplay(reflection);
       renderTrophySentences(records, totalSec, mostValue, longest, reflection);
+    }
+
+
+    function getSmallestRecord(records) {
+      if (!records.length) return null;
+      return [...records].sort((a, b) => (a.durationSec || 0) - (b.durationSec || 0))[0];
+    }
+    function renderTrophyHighlights(records) {
+      const longest = getLongestRecord(records);
+      const smallest = getSmallestRecord(records);
+      if (!$("longestActionTitle")) return;
+      if (!longest) {
+        $("longestActionTitle").textContent = "아직 기록이 없습니다.";
+        $("longestActionDesc").textContent = "기록이 생기면 오늘 가장 오래 머문 행동이 표시됩니다.";
+        $("smallestActionTitle").textContent = "아직 기록이 없습니다.";
+        $("smallestActionDesc").textContent = "짧은 행동도 정확히 그만큼 존중받습니다.";
+        return;
+      }
+      $("longestActionTitle").textContent = `${longest.actionText} · ${formatDurationShort(longest.durationSec)}`;
+      $("longestActionDesc").textContent = `${(longest.values || []).join(", ") || "이름 붙이는 중"} 가치가 가장 오래 몸을 통과한 기록입니다.`;
+      $("smallestActionTitle").textContent = `${smallest.actionText} · ${formatDurationShort(smallest.durationSec)}`;
+      $("smallestActionDesc").textContent = `작아 보여도 사라지지 않은 정확한 회복 기록입니다.`;
+    }
+    function timeBucketName(date) {
+      const h = date.getHours();
+      if (h < 6) return "새벽";
+      if (h < 12) return "오전";
+      if (h < 18) return "오후";
+      return "저녁";
+    }
+    function renderTimeBuckets(records) {
+      const wrap = $("timeBucketGrid");
+      if (!wrap) return;
+      const buckets = { "새벽": { count: 0, sec: 0 }, "오전": { count: 0, sec: 0 }, "오후": { count: 0, sec: 0 }, "저녁": { count: 0, sec: 0 } };
+      records.forEach((r) => {
+        const name = timeBucketName(new Date(r.startAt));
+        buckets[name].count += 1;
+        buckets[name].sec += r.durationSec || 0;
+      });
+      wrap.innerHTML = "";
+      Object.entries(buckets).forEach(([name, data]) => {
+        const div = document.createElement("div");
+        div.className = "time-bucket";
+        div.innerHTML = `<div class="time-bucket-name">${name}</div><div class="time-bucket-count">${data.count}회</div><div class="time-bucket-sub">${formatDurationShort(data.sec)}</div>`;
+        wrap.appendChild(div);
+      });
+    }
+    function renderReflectionDisplay(reflection) {
+      const display = $("reflectionDisplay");
+      if (!display) return;
+      display.textContent = reflection ? `오늘 내가 직접 남긴 문장:\n“${reflection}”` : "아직 저장된 마무리 문장이 없습니다.";
     }
 
     function renderTrophyValueMap(valueCounts) {
@@ -1982,8 +2217,8 @@ ${record.trophySentence || "기록 없음"}
 
       const sentences = [
         count === 1
-          ? "오늘 민우는 한 번이라도 삶의 방향으로 돌아왔고, 그 한 번은 사라지지 않고 기록으로 남았다."
-          : `오늘 민우는 ${count}번 삶의 방향으로 돌아왔고, 끊김보다 다시 시작한 흔적을 남겼다.`,
+          ? "오늘 나는 한 번이라도 삶의 방향으로 돌아왔고, 그 한 번은 사라지지 않고 기록으로 남았다."
+          : `오늘 나는 ${count}번 삶의 방향으로 돌아왔고, 끊김보다 다시 시작한 흔적을 남겼다.`,
         mostValue
           ? `오늘 ${mostValue}이라는 가치는 생각이 아니라 실제 행동으로 한 번 이상 몸을 통과했다.`
           : "오늘의 가치는 아직 더 천천히 이름 붙여도 괜찮다.",
@@ -1992,7 +2227,7 @@ ${record.trophySentence || "기록 없음"}
           ? `가장 오래 남은 행동은 ${longestText}이고, 이 행동은 오늘의 작은 중심점이 되었다.`
           : "아직 가장 오래 남은 행동은 없다.",
         reflection
-          ? `오늘 민우가 직접 남긴 문장도 트로피의 일부다: “${reflection}”`
+          ? `오늘 내가 직접 남긴 문장도 트로피의 일부다: “${reflection}”`
           : "오늘의 마무리 문장은 비워두어도 괜찮다. 비어 있음도 오늘의 여백으로 남는다."
       ];
 
@@ -2011,7 +2246,7 @@ ${record.trophySentence || "기록 없음"}
         return `${idx + 1}. ${formatTimeOnly(r.startAt)}–${formatTimeOnly(r.endAt)} · ${r.actionText} · ${formatDurationShort(r.durationSec)} · 가치: ${(r.values || []).join(", ") || "없음"} · 상태: ${r.stateBefore} · 감각: ${r.sensationAfter || "기록 없음"}`;
       }).join("\n");
 
-      return `아래는 민우의 오늘 회복 행동 기록입니다.
+      return `아래는 사용자의 오늘 회복 행동 기록입니다.
 
 목표:
 - 하루를 평가하거나 압박하지 말고, 오늘 남은 작은 흔적을 회복 트로피처럼 정리해주세요.
@@ -2021,16 +2256,17 @@ ${record.trophySentence || "기록 없음"}
 - 5~8문장 정도로 하루 마무리 보상 문장을 만들어주세요.
 
 오늘 요약:
+- 보상 문장에서 사용할 표현: ${getSubject()}
 - 회복 세션 수: ${records.length}
 - 총 회복 시간: ${formatDurationShort(totalSec)}
 - 접촉한 가치: ${values.join(", ") || "기록 없음"}
 - 가장 오래 남은 행동: ${longest ? `${longest.actionText} (${formatDurationShort(longest.durationSec)})` : "기록 없음"}
-- 민우가 직접 쓴 마무리 문장: ${reflection || "기록 없음"}
+- 사용자가 직접 쓴 마무리 문장: ${reflection || "기록 없음"}
 
 오늘 기록:
 ${recordLines || "기록 없음"}
 
-민우에게 맞는 '오늘의 회복 트로피' 문장으로 다듬어주세요.`;
+사용자에게 맞는 '오늘의 회복 트로피' 문장으로 다듬어주세요.`;
     }
 
     function renderRecords() {
@@ -2150,6 +2386,7 @@ ${recordLines || "기록 없음"}
     function renderAll() {
       renderTodayDashboard();
       renderTrophyDashboard();
+      renderDictionaries();
       renderRecords();
       updatePwaStatus();
     }
@@ -2207,6 +2444,7 @@ ${recordLines || "기록 없음"}
 
     function init() {
       migrateOldStorageIfNeeded();
+      loadDictionaries();
 
       makeChips("stateChips", STATES, (value) => {
         selectedState = value;
@@ -2214,16 +2452,8 @@ ${recordLines || "기록 없음"}
         validateStartForm();
       }, "state-chip");
 
-      makeChips("emotionChips", EMOTIONS, (value) => {
-        selectedEmotions = toggleArray(selectedEmotions, value);
-        updateChipSelection("emotionChips", selectedEmotions);
-      });
-
-      makeChips("valueChips", VALUES, (value) => {
-        selectedValues = toggleArray(selectedValues, value);
-        updateChipSelection("valueChips", selectedValues);
-        validateStartForm();
-      });
+      renderEmotionChips();
+      renderValueChips();
 
       makeChips("reasonChips", REASONS, (value) => {
         selectedReason = value;
@@ -2239,6 +2469,8 @@ ${recordLines || "기록 없음"}
 
       $("difficulty").addEventListener("input", (e) => $("difficultyLabel").textContent = e.target.value);
       $("actionText").addEventListener("input", validateStartForm);
+      if ($("subjectText")) $("subjectText").value = getSubject();
+      $("saveSubjectBtn").addEventListener("click", saveSubjectFromInput);
       $("addEmotionBtn").addEventListener("click", addCustomEmotionFromInput);
       $("addValueBtn").addEventListener("click", addCustomValueFromInput);
       $("customEmotionInput").addEventListener("keydown", (event) => {
