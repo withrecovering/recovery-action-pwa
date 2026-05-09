@@ -1,7 +1,7 @@
 {
   "name": "작은 행동 보상 번역기",
   "short_name": "회복기록",
-  "description": "기록 중 다른 화면 이동을 잠그는 현실행동 집중 모드를 추가한 로컬 회복 기록 PWA",
+  "description": "HTML, CSS, JavaScript 파일을 분리해 유지보수성을 높인 로컬 회복 기록 PWA",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
