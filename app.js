@@ -885,6 +885,8 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
 
       saveActive(activeSession);
       showActiveView();
+      switchTab("start");
+      updateFocusLockUi();
       showToast("시작 시간이 기록되었습니다");
     }
 
@@ -942,21 +944,14 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       renderSensationChips();
       renderCustomReasonChips();
       renderCustomSensationChips();
-$("idleView").classList.add("hidden");
+      switchTab("start");
+      updateFocusLockUi();
+      $("idleView").classList.add("hidden");
       $("activeView").classList.add("hidden");
       $("endView").classList.remove("hidden");
 
       if (timerInterval) clearInterval(timerInterval);
     }
-
-    
-
-
-    
-
-    
-
-    async 
 
     function savePendingRecord() {
       if (!pendingEnd) return;
@@ -1759,8 +1754,13 @@ $("startBtn").addEventListener("click", startSession);
       $("jumpNowBtn").addEventListener("click", jumpToNow);
       $("jumpFirstRecordBtn").addEventListener("click", jumpToFirstRecord);
 activeSession = loadActive();
-      if (activeSession) showActiveView();
-      else showIdleView();
+      if (activeSession) {
+        showActiveView();
+        switchTab("start");
+      } else {
+        showIdleView();
+      }
+      updateFocusLockUi();
 
       renderCustomEmotionChips();
       renderCustomValueChips();
