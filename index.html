@@ -1269,6 +1269,35 @@
       border-color: var(--accent);
     }
 
+  
+    .tab.locked {
+      opacity: 0.42;
+      cursor: not-allowed;
+    }
+
+    .focus-lock-banner {
+      display: none;
+      background: #eef8f5;
+      border: 1px solid rgba(31,95,91,0.22);
+      color: var(--accent);
+      border-radius: 16px;
+      padding: 12px 14px;
+      margin: 8px 0 14px;
+      font-weight: 900;
+      line-height: 1.45;
+    }
+
+    .focus-lock-banner.show {
+      display: block;
+    }
+
+    .focus-lock-note {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      margin-top: 4px;
+    }
+
   </style>
 </head>
 
@@ -1669,7 +1698,7 @@
 
         <div class="card">
           <h2>PWA 설치 상태</h2>
-          <p class="small"><strong>현재 버전: v17</strong></p>
+          <p class="small"><strong>현재 버전: v18</strong></p>
           <p class="small" id="pwaStatus">설치 상태를 확인 중입니다.</p>
           <div class="row">
             <button class="btn" id="installBtn" disabled>앱 설치하기</button>
@@ -2823,6 +2852,7 @@ ${record.rewardSentence || "기록 없음"}
       showIdleView();
       updateDateControls();
       renderAll();
+      updateFocusLockUi();
       showToast("회복 기록이 저장되었습니다");
       switchTab("today");
     }
@@ -2843,12 +2873,14 @@ ${record.rewardSentence || "기록 없음"}
     }
 
     function cancelEnd() {
-      if (!confirm("이 종료 기록을 저장하지 않을까요? 진행 중 세션도 삭제됩니다.")) return;
-      activeSession = null;
+      const ok = confirm("이 기록 마무리를 취소하고 다시 진행 화면으로 돌아갈까요?");
+      if (!ok) return;
+
       pendingEnd = null;
-      clearActive();
-      showIdleView();
-      showToast("진행 중 세션이 취소되었습니다");
+      selectedReason = "";
+      selectedSensation = "";
+      showActiveView();
+      updateFocusLockUi();
     }
 
     function getTodayRecords() {
@@ -3390,15 +3422,46 @@ ${recordLines || "기록 없음"}
         .replaceAll("'", "&#039;");
     }
 
+    function isFocusLocked() {
+      return Boolean(activeSession || pendingEnd);
+    }
+
+    function getFocusLockMessage() {
+      if (pendingEnd) return "먼저 지금 행동을 저장하거나 취소해주세요.";
+      if (activeSession) return "먼저 지금 행동을 ‘여기까지’ 또는 ‘완료’로 기록해주세요.";
+      return "";
+    }
+
+    function updateFocusLockUi() {
+      const locked = isFocusLocked();
+      const banner = $("focusLockBanner");
+      if (banner) banner.classList.toggle("show", locked);
+
+      document.querySelectorAll(".tab").forEach((tab) => {
+        const shouldLock = locked && tab.dataset.tab !== "start";
+        tab.classList.toggle("locked", shouldLock);
+        tab.setAttribute("aria-disabled", shouldLock ? "true" : "false");
+      });
+    }
+
     function switchTab(tab) {
+      if (isFocusLocked() && tab !== "start") {
+        showToast(getFocusLockMessage());
+        updateFocusLockUi();
+        return;
+      }
+
       document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
+
       $("startTab").classList.toggle("hidden", tab !== "start");
       $("todayTab").classList.toggle("hidden", tab !== "today");
       $("trophyTab").classList.toggle("hidden", tab !== "trophy");
       $("calendarTab").classList.toggle("hidden", tab !== "calendar");
       $("recordsTab").classList.toggle("hidden", tab !== "records");
       $("settingsTab").classList.toggle("hidden", tab !== "settings");
-      renderAll();
+
+      updateFocusLockUi();
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
     function exportJson() {
@@ -3618,6 +3681,13 @@ activeSession = loadActive();
     
 
     
+
+
+    window.addEventListener("beforeunload", (event) => {
+      if (!isFocusLocked()) return;
+      event.preventDefault();
+      event.returnValue = "";
+    });
 
     init();
   </script>
