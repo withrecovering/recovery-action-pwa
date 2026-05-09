@@ -1,7 +1,7 @@
 {
   "name": "작은 행동 회복 기록",
   "short_name": "회복기록",
-  "description": "작은 행동의 시작과 종료 기록에 집중하는 로컬 회복 기록 PWA",
+  "description": "기록 중에도 백업 탭을 사용할 수 있도록 조정한 로컬 회복 기록 PWA",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

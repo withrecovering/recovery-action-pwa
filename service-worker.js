@@ -1,4 +1,4 @@
-const CACHE_NAME = "minwoo-recovery-pwa-v20-1-no-reward-prompts-fix";
+const CACHE_NAME = "minwoo-recovery-pwa-v20-2-focus-lock-settings-fix";
 const APP_SHELL = [
   "./",
   "./index.html",

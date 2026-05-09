@@ -277,6 +277,17 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       localStorage.setItem(ACTIVE_KEY, JSON.stringify(session));
     }
 
+
+    function isValidActiveSession(session) {
+      return Boolean(
+        session &&
+        session.startAt &&
+        session.startMs &&
+        session.actionText &&
+        Array.isArray(session.values)
+      );
+    }
+
     function loadActive() {
       try { return JSON.parse(localStorage.getItem(ACTIVE_KEY)); }
       catch { return null; }
@@ -902,10 +913,11 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       $("activeView").classList.remove("hidden");
       $("endView").classList.add("hidden");
 
-      $("activeAction").textContent = activeSession.actionText;
+      $("activeAction").textContent = activeSession.actionText || "진행 중인 행동";
+      const activeValues = Array.isArray(activeSession.values) ? activeSession.values.join(", ") : "";
       $("activeMeta").innerHTML = `
         시작: ${formatDateTime(activeSession.startAt)}<br />
-        상태: ${activeSession.stateBefore} · 가치: ${activeSession.values.join(", ")}
+        상태: ${activeSession.stateBefore || "기록 중"} · 가치: ${activeValues || "이름 붙이는 중"}
       `;
 
       updateTimer();
@@ -915,7 +927,7 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
 
     function updateTimer() {
       if (!activeSession) return;
-      const elapsed = Math.floor((Date.now() - activeSession.startMs) / 1000);
+      const elapsed = Math.floor((Date.now() - Number(activeSession.startMs || Date.now())) / 1000);
       $("timer").textContent = formatDuration(elapsed);
     }
 
@@ -1521,8 +1533,8 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
     }
 
     function getFocusLockMessage() {
-      if (pendingEnd) return "먼저 지금 행동을 저장하거나 취소해주세요.";
-      if (activeSession) return "먼저 지금 행동을 ‘여기까지’ 또는 ‘완료’로 기록해주세요.";
+      if (pendingEnd) return "먼저 지금 행동을 저장하거나 취소해주세요. 백업 탭은 사용할 수 있습니다.";
+      if (activeSession) return "먼저 지금 행동을 ‘여기까지’ 또는 ‘완료’로 기록해주세요. 백업 탭은 사용할 수 있습니다.";
       return "";
     }
 
@@ -1532,14 +1544,15 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       if (banner) banner.classList.toggle("show", locked);
 
       document.querySelectorAll(".tab").forEach((tab) => {
-        const shouldLock = locked && tab.dataset.tab !== "start";
+        const shouldLock = locked && !["start", "settings"].includes(tab.dataset.tab);
         tab.classList.toggle("locked", shouldLock);
         tab.setAttribute("aria-disabled", shouldLock ? "true" : "false");
       });
     }
 
     function switchTab(tab) {
-      if (isFocusLocked() && tab !== "start") {
+      const allowedWhileLocked = tab === "start" || tab === "settings";
+      if (isFocusLocked() && !allowedWhileLocked) {
         showToast(getFocusLockMessage());
         updateFocusLockUi();
         return;
@@ -1754,6 +1767,11 @@ $("startBtn").addEventListener("click", startSession);
       $("jumpNowBtn").addEventListener("click", jumpToNow);
       $("jumpFirstRecordBtn").addEventListener("click", jumpToFirstRecord);
 activeSession = loadActive();
+      if (activeSession && !isValidActiveSession(activeSession)) {
+        clearActive();
+        activeSession = null;
+      }
+
       if (activeSession) {
         showActiveView();
         switchTab("start");
