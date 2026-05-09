@@ -1,7 +1,7 @@
 {
-  "name": "작은 행동 보상 번역기",
+  "name": "작은 행동 회복 기록",
   "short_name": "회복기록",
-  "description": "HTML, CSS, JavaScript 파일을 분리해 유지보수성을 높인 로컬 회복 기록 PWA",
+  "description": "작은 행동의 시작과 종료 기록에 집중하는 로컬 회복 기록 PWA",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-  <title>작은 행동 보상 번역기</title>
-  <meta name="description" content="작은 행동의 시작과 멈춤을 회복의 증거로 남기는 로컬 PWA" />
+  <title>작은 행동 회복 기록</title>
+  <meta name="description" content="작은 행동의 시작과 종료를 가볍게 기록하는 로컬 회복 기록 PWA" />
   <meta name="theme-color" content="#1f5f5b" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icon-192.png" />
@@ -15,7 +15,7 @@
 <body>
   <div class="app">
     <header>
-      <h1>작은 행동 보상 번역기</h1>
+      <h1>작은 행동 회복 기록</h1>
       <div class="subtitle">
         시작한 시간, 멈춘 시간, 다시 돌아온 시간을 모두 회복의 증거로 남깁니다.
       </div>
@@ -103,15 +103,8 @@
             <div class="chips" id="sensationChips"></div>
             
 </div>
-
-          <div class="field">
-            <label for="rewardText">보상 문장</label>
-            <textarea id="rewardText"></textarea>
-            <div class="hint">이 문장 하나만 저장됩니다. 마음에 들지 않으면 직접 고쳐도 됩니다.</div>
-          </div>
 <div class="row">
-            <button class="btn secondary" id="copyPromptBtn">GPT에게 다듬기용 프롬프트 복사</button>
-            <button class="btn" id="saveRecordBtn">기록 저장하기</button>
+<button class="btn" id="saveRecordBtn">기록 저장하기</button>
             <button class="btn danger" id="cancelEndBtn">저장하지 않고 취소</button>
           </div>
         </div>
@@ -241,7 +234,7 @@
         </div>
 
         <div class="card">
-          <h2 id="trophySummaryTitle">선택한 날짜의 보상 요약</h2>
+          <h2 id="trophySummaryTitle">선택한 날짜의 회복 요약</h2>
           <div class="trophy-grid">
             <div class="trophy-metric">
               <div class="trophy-num" id="trophySessionCount">0</div>
@@ -334,17 +327,6 @@
 
       <section id="settingsTab" class="hidden">
 
-        <div class="card">
-          <h2>개인화 설정</h2>
-          <div class="field">
-            <label for="subjectText">보상 문장에서 사용할 표현</label>
-            <input id="subjectText" type="text" placeholder="예: 나는, 민우는, 오늘의 나는" />
-            <div class="hint">보상 문장과 GPT 프롬프트에 들어갈 주어입니다. 기본값은 “나는”입니다.</div>
-          </div>
-          <div class="row">
-            <button class="btn" id="saveSubjectBtn">표현 저장</button>
-          </div>
-        </div>
 
         <div class="card">
           <h2>내 감정 사전</h2>
@@ -409,7 +391,7 @@
 
         <div class="card">
           <h2>PWA 설치 상태</h2>
-          <p class="small"><strong>현재 버전: v19-split</strong></p>
+          <p class="small"><strong>현재 버전: v20-no-reward-prompts</strong></p>
           <p class="small" id="pwaStatus">설치 상태를 확인 중입니다.</p>
           <div class="row">
             <button class="btn" id="installBtn" disabled>앱 설치하기</button>
@@ -455,7 +437,7 @@
     </main>
   </div>
 
-  <div id="toast" class="toast">복사되었습니다</div>
+  <div id="toast" class="toast">알림</div>
   <script src="app.js"></script>
 </body>
 </html>

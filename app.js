@@ -2,7 +2,6 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
     const OLD_STORAGE_KEY = "minwoo_recovery_records_v1";
     const ACTIVE_KEY = "minwoo_recovery_active_v2";
     const REFLECTION_KEY = "minwoo_daily_reflection_v1";
-    const SUBJECT_KEY = "recovery_app_subject_v1";
     const CUSTOM_EMOTION_DICT_KEY = "recovery_app_custom_emotions_v1";
     const CUSTOM_VALUE_DICT_KEY = "recovery_app_custom_values_v1";
     const CUSTOM_REASON_DICT_KEY = "recovery_app_custom_reasons_v1";
@@ -149,7 +148,7 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       if ($("dashboardTitle")) $("dashboardTitle").textContent = `${dayLabel}의 회복 대시보드`;
       if ($("selectedRecordListTitle")) $("selectedRecordListTitle").textContent = `${dayLabel} 기록 목록`;
       if ($("trophyKicker")) $("trophyKicker").textContent = `${dayLabel}의 회복 트로피`;
-      if ($("trophySummaryTitle")) $("trophySummaryTitle").textContent = `${dayLabel}의 보상 요약`;
+      if ($("trophySummaryTitle")) $("trophySummaryTitle").textContent = `${dayLabel}의 회복 요약`;
       if ($("trophyCenterTitle")) $("trophyCenterTitle").textContent = `${dayLabel}의 중심 행동`;
       if ($("timeBucketTitle")) $("timeBucketTitle").textContent = `${dayLabel}의 시간대 요약`;
       if ($("valueMapTitle")) $("valueMapTitle").textContent = `${shortLabel} 행동으로 살아난 가치`;
@@ -262,12 +261,8 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       saveArrayToStorage(CUSTOM_SENSATION_DICT_KEY, SENSATIONS);
     }
 
-    function getSubject() { return localStorage.getItem(SUBJECT_KEY) || "나는"; }
-    function setSubject(value) {
-      const subject = normalizeTagText(value) || "나는";
-      localStorage.setItem(SUBJECT_KEY, subject);
-      if ($("subjectText")) $("subjectText").value = subject;
-    }
+    
+    
 
     function loadRecords() {
       try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
@@ -384,7 +379,6 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
         renderCustomReasonChips();
         renderDictionaries();
         updateChipSelection("reasonChips", selectedReason);
-        if (pendingEnd) $("rewardText").value = generateRewardSentence(pendingEnd, selectedReason, selectedSensation);
         return true;
       }
 
@@ -399,7 +393,6 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
         renderCustomSensationChips();
         renderDictionaries();
         updateChipSelection("sensationChips", selectedSensation);
-        if (pendingEnd) $("rewardText").value = generateRewardSentence(pendingEnd, selectedReason, selectedSensation);
         return true;
       }
 
@@ -489,7 +482,6 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       renderReasonChips();
       renderDictionaries();
       updateSingleChipSelection("reasonChips", selectedReason);
-      if (pendingEnd) $("rewardText").value = generateRewardSentence(pendingEnd, selectedReason, selectedSensation);
       showToast("멈춤/끝냄 이유가 추가되었습니다");
     }
 
@@ -509,7 +501,6 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       renderSensationChips();
       renderDictionaries();
       updateSingleChipSelection("sensationChips", selectedSensation);
-      if (pendingEnd) $("rewardText").value = generateRewardSentence(pendingEnd, selectedReason, selectedSensation);
       showToast("행동 후 감각이 추가되었습니다");
     }
 
@@ -532,7 +523,6 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
         button.addEventListener("click", () => {
           selectedReason = selectedReason === item ? "" : item;
           updateSingleChipSelection("reasonChips", selectedReason);
-          if (pendingEnd) $("rewardText").value = generateRewardSentence(pendingEnd, selectedReason, selectedSensation);
         });
         container.appendChild(button);
       });
@@ -559,7 +549,6 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
         button.addEventListener("click", () => {
           selectedSensation = selectedSensation === item ? "" : item;
           updateSingleChipSelection("sensationChips", selectedSensation);
-          if (pendingEnd) $("rewardText").value = generateRewardSentence(pendingEnd, selectedReason, selectedSensation);
         });
         container.appendChild(button);
       });
@@ -583,7 +572,6 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       saveCustomReasonDictionary();
       renderReasonChips();
       renderDictionaries();
-      if (pendingEnd) $("rewardText").value = generateRewardSentence(pendingEnd, selectedReason, selectedSensation);
       showToast("이유 사전에서 삭제되었습니다");
     }
 
@@ -593,7 +581,6 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       saveCustomSensationDictionary();
       renderSensationChips();
       renderDictionaries();
-      if (pendingEnd) $("rewardText").value = generateRewardSentence(pendingEnd, selectedReason, selectedSensation);
       showToast("감각 사전에서 삭제되었습니다");
     }
 
@@ -858,11 +845,7 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       renderDictionaries();
     }
 
-    function saveSubjectFromInput() {
-      setSubject($("subjectText").value);
-      showToast("보상 문장 표현이 저장되었습니다");
-      renderAll();
-    }
+    
 
     function toggleArray(arr, value) {
       return arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value];
@@ -959,8 +942,6 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       renderSensationChips();
       renderCustomReasonChips();
       renderCustomSensationChips();
-
-      $("rewardText").value = generateRewardSentence(pendingEnd, selectedReason, selectedSensation);
 $("idleView").classList.add("hidden");
       $("activeView").classList.add("hidden");
       $("endView").classList.remove("hidden");
@@ -968,106 +949,14 @@ $("idleView").classList.add("hidden");
       if (timerInterval) clearInterval(timerInterval);
     }
 
-    function generateRewardSentence(session, reason = "", sensation = "") {
-      const duration = formatDurationShort(session.durationSec);
-      const values = session.values.join(", ");
-      const emotions = session.emotionsBefore && session.emotionsBefore.length > 0
-        ? session.emotionsBefore.join(", ")
-        : "뚜렷하게 이름 붙이기 어려운 감정";
-
-      const endPhrase = session.endType === "완료" ? "완료로 기록했다" : "여기까지 한 만큼을 기록했다";
-      const reasonPhrase = reason ? `${reason} 때문에 멈췄거나 마무리했지만,` : "멈춘 이유를 아직 이름 붙이지 못해도,";
-      const sensationPhrase = sensation ? `행동 후 감각은 '${sensation}'으로 남았다.` : "행동 후 감각은 아직 더 관찰해도 괜찮다.";
-
-      const subject = getSubject();
-
-      return `${subject} ${session.stateBefore} 상태와 ${emotions} 속에서도 '${session.actionText}'을/를 ${duration} 동안 시도했고, ${endPhrase}.
-
-이 행동은 작아 보여도 ${values}이라는 가치를 몸으로 번역한 회복 행동이다.
-
-${reasonPhrase} 이것은 실패가 아니라 시작하고, 알아차리고, 멈춤까지 기록한 하나의 회복 루프다.
-
-${sensationPhrase}
-
-오늘의 나는 자신을 완전히 버리지 않았다.`;
-    }
+    
 
 
-    function buildGptPrompt(recordLike) {
-      const reward = $("rewardText").value.trim();
-return `아래는 사용자가 로컬 회복 행동 기록 앱에 남긴 작은 행동 기록입니다.
+    
 
-목표:
-- 이 행동을 과장하지 않고, 하찮게 만들지도 말아주세요.
-- 상담자처럼 길게 분석하지 말고, 짧고 따뜻하게 다듬어주세요.
-- 핵심은 '작은 행동을 회복의 증거와 내적보상 문장으로 번역하는 것'입니다.
-- 자기비난을 줄이고, 다시 시작할 수 있다는 감각을 살려주세요.
-- 문장은 3~5문장 정도로 정리해주세요.
+    
 
-기록:
-- 보상 문장에서 사용할 표현: ${getSubject()}
-- 시작 시간: ${formatDateTime(recordLike.startAt)}
-- 끝 시간: ${formatDateTime(recordLike.endAt)}
-- 지속 시간: ${formatDurationShort(recordLike.durationSec)}
-- 시작 전 상태: ${recordLike.stateBefore}
-- 시작 전 감정: ${(recordLike.emotionsBefore || []).join(", ") || "기록 없음"}
-- 작은 행동: ${recordLike.actionText}
-- 연결된 가치: ${(recordLike.values || []).join(", ")}
-- 끝낸 방식: ${recordLike.endType}
-- 멈춘/끝낸 이유: ${selectedReason || recordLike.stopReason || "기록 없음"}
-- 행동 후 감각: ${selectedSensation || recordLike.sensationAfter || "기록 없음"}
-
-현재 보상 문장 초안:
-${reward}
-
-
-이 기록을 사용자에게 맞는 보상 문장으로 다듬어주세요.`;
-    }
-
-    function buildGptPromptFromRecord(record) {
-      return `아래는 사용자가 로컬 회복 행동 기록 앱에 남긴 작은 행동 기록입니다.
-
-목표:
-- 이 행동을 과장하지 않고, 하찮게 만들지도 말아주세요.
-- 상담자처럼 길게 분석하지 말고, 짧고 따뜻하게 다듬어주세요.
-- 핵심은 '작은 행동을 회복의 증거와 내적보상 문장으로 번역하는 것'입니다.
-- 자기비난을 줄이고, 다시 시작할 수 있다는 감각을 살려주세요.
-- 문장은 3~5문장 정도로 정리해주세요.
-
-기록:
-- 보상 문장에서 사용할 표현: ${getSubject()}
-- 시작 시간: ${formatDateTime(record.startAt)}
-- 끝 시간: ${formatDateTime(record.endAt)}
-- 지속 시간: ${formatDurationShort(record.durationSec)}
-- 시작 전 상태: ${record.stateBefore}
-- 시작 전 감정: ${(record.emotionsBefore || []).join(", ") || "기록 없음"}
-- 작은 행동: ${record.actionText}
-- 연결된 가치: ${(record.values || []).join(", ")}
-- 끝낸 방식: ${record.endType}
-- 멈춘/끝낸 이유: ${record.stopReason || "기록 없음"}
-- 행동 후 감각: ${record.sensationAfter || "기록 없음"}
-
-현재 보상 문장:
-${record.rewardSentence || "기록 없음"}
-
-
-이 기록을 사용자에게 맞는 보상 문장으로 다듬어주세요.`;
-    }
-
-    async function copyText(text) {
-      try {
-        await navigator.clipboard.writeText(text);
-        showToast("복사되었습니다");
-      } catch {
-        const area = document.createElement("textarea");
-        area.value = text;
-        document.body.appendChild(area);
-        area.select();
-        document.execCommand("copy");
-        document.body.removeChild(area);
-        showToast("복사되었습니다");
-      }
-    }
+    async 
 
     function savePendingRecord() {
       if (!pendingEnd) return;
@@ -1082,7 +971,6 @@ ${record.rewardSentence || "기록 없음"}
         endMinute,
         stopReason: selectedReason || "",
         sensationAfter: selectedSensation || "",
-        rewardSentence: $("rewardText").value.trim(),
         trophySentence: ""
       };
 
@@ -1399,7 +1287,6 @@ ${record.rewardSentence || "기록 없음"}
         $("trophySubtitle").textContent = `첫 기록 하나가 생기면 이곳에 ${dayLabel}의 회복 트로피가 만들어집니다.`;
         $("trophyDetail").textContent = `${dayLabel}의 기록이 아직 없습니다.`;
         $("trophyValueMap").innerHTML = `<div class="empty">${dayLabel} 접촉한 가치가 아직 없습니다.</div>`;
-        if ($("trophySentences")) $("trophySentences").innerHTML = `<li>${dayLabel} 아직 남은 보상 문장이 없습니다. 첫 기록 하나가 생기면 이곳에 남습니다.</li>`;
         renderTrophyHighlights([]);
         renderTimeBuckets([]);
         renderReflectionDisplay(reflection);
@@ -1516,43 +1403,7 @@ ${record.rewardSentence || "기록 없음"}
 
     
 
-    function buildTrophyPrompt() {
-      const records = getTodayRecords();
-      const reflection = $("dailyReflection").value.trim();
-      const totalSec = records.reduce((sum, r) => sum + (r.durationSec || 0), 0);
-      const valueCounts = getValueCounts(records);
-      const values = Object.keys(valueCounts);
-      const longest = getLongestRecord(records);
-
-      const recordLines = records.map((r, idx) => {
-        return `${idx + 1}. ${formatTimeOnly(r.startAt)}–${formatTimeOnly(r.endAt)} · ${r.actionText} · ${formatDurationShort(r.durationSec)} · 가치: ${(r.values || []).join(", ") || "없음"} · 상태: ${r.stateBefore} · 감각: ${r.sensationAfter || "기록 없음"}`;
-      }).join("\n");
-
-      return `아래는 사용자의 오늘 회복 행동 기록입니다.
-
-목표:
-- 하루를 평가하거나 압박하지 말고, 오늘 남은 작은 흔적을 회복 트로피처럼 정리해주세요.
-- 과장하지 말고, 하찮게 만들지도 말아주세요.
-- 핵심은 '작은 행동이 사라지지 않고 회복의 증거로 남았다'는 감각입니다.
-- 자기비난을 줄이고, 내일 다시 시작할 수 있는 감각을 살려주세요.
-- 5~8문장 정도로 하루 마무리 보상 문장을 만들어주세요.
-
-선택한 날짜:
-- 날짜: ${formatDateKeyHuman(selectedDateKey)}
-
-오늘 요약:
-- 보상 문장에서 사용할 표현: ${getSubject()}
-- 회복 세션 수: ${records.length}
-- 총 회복 시간: ${formatDurationShort(totalSec)}
-- 접촉한 가치: ${values.join(", ") || "기록 없음"}
-- 가장 오래 남은 행동: ${longest ? `${longest.actionText} (${formatDurationShort(longest.durationSec)})` : "기록 없음"}
-- 사용자가 직접 쓴 마무리 문장: ${reflection || "기록 없음"}
-
-오늘 기록:
-${recordLines || "기록 없음"}
-
-사용자에게 맞는 '오늘의 회복 트로피' 문장으로 다듬어주세요.`;
-    }
+    
 
 
     function renderCalendarDashboard() {
@@ -1644,13 +1495,10 @@ ${recordLines || "기록 없음"}
             가치: ${(record.values || []).map(escapeHtml).join(", ") || "기록 없음"}<br/>
             이유: ${escapeHtml(record.stopReason || "기록 없음")} · 감각: ${escapeHtml(record.sensationAfter || "기록 없음")}
           </div>
-          <div class="reward">${escapeHtml(record.rewardSentence || "")}</div>
-          <div class="row">
-            <button class="btn secondary copy-record">GPT 프롬프트 복사</button>
-            <button class="btn danger delete-record">삭제</button>
+<div class="row">
+<button class="btn danger delete-record">삭제</button>
           </div>
         `;
-        div.querySelector(".copy-record").addEventListener("click", () => copyText(buildGptPromptFromRecord(record)));
         div.querySelector(".delete-record").addEventListener("click", () => deleteRecord(record.id));
         list.appendChild(div);
       });
@@ -1717,7 +1565,7 @@ ${recordLines || "기록 없음"}
 
     function exportJson() {
       const records = loadRecords();
-      const payload = { app: "작은 행동 보상 번역기", version: 2, exportedAt: nowIso(), records };
+      const payload = { app: "작은 행동 회복 기록", version: 2, exportedAt: nowIso(), records };
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -1841,8 +1689,6 @@ ${recordLines || "기록 없음"}
 
       $("difficulty").addEventListener("input", (e) => $("difficultyLabel").textContent = e.target.value);
       $("actionText").addEventListener("input", validateStartForm);
-      if ($("subjectText")) $("subjectText").value = getSubject();
-      $("saveSubjectBtn").addEventListener("click", saveSubjectFromInput);
       $("saveEmotionDictBtn").addEventListener("click", saveEmotionDictionaryItem);
       $("deleteEmotionDictBtn").addEventListener("click", deleteSelectedEmotionDictionaryItem);
       $("saveValueDictBtn").addEventListener("click", saveValueDictionaryItem);
@@ -1878,10 +1724,6 @@ ${recordLines || "기록 없음"}
 $("startBtn").addEventListener("click", startSession);
       $("pauseBtn").addEventListener("click", () => endSession("여기까지"));
       $("completeBtn").addEventListener("click", () => endSession("완료"));
-      $("copyPromptBtn").addEventListener("click", () => {
-        if (!pendingEnd) return;
-        copyText(buildGptPrompt(pendingEnd));
-      });
       $("saveRecordBtn").addEventListener("click", savePendingRecord);
       $("cancelEndBtn").addEventListener("click", cancelEnd);
 
