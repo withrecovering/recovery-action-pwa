@@ -404,8 +404,8 @@
           <div class="dictionary-manager">
             <input id="managePresetInput" type="text" placeholder="프리셋 추가/수정: 예) 물 마시기, 식사, 책 보기, 걷기" />
             <div class="row dictionary-actions">
-              <button class="btn secondary" id="savePresetBtn" type="button">프리셋 저장</button>
-              <button class="btn danger" id="deletePresetBtn" type="button">선택 삭제</button>
+              <button class="btn secondary" id="savePresetBtn" type="button" onclick="savePresetItem()">프리셋 저장</button>
+              <button class="btn danger" id="deletePresetBtn" type="button" onclick="deleteSelectedPresetItem()">선택 삭제</button>
             </div>
             <div class="hint">자주 하는 작은 행동을 저장해두면 시작 탭에서 빠르게 선택할 수 있습니다.</div>
           </div>
@@ -414,7 +414,7 @@
 
         <div class="card">
           <h2>PWA 설치 상태</h2>
-          <p class="small"><strong>현재 버전: v21-quick-presets</strong></p>
+          <p class="small"><strong>현재 버전: v21.1-quick-preset-save-fix</strong></p>
           <p class="small" id="pwaStatus">설치 상태를 확인 중입니다.</p>
           <div class="row">
             <button class="btn" id="installBtn" disabled>앱 설치하기</button>

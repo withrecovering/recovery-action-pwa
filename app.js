@@ -328,20 +328,35 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       });
     }
 
-    function savePresetItem() {
+    function savePresetItem(event) {
+      if (event && event.preventDefault) event.preventDefault();
+
       const input = $("managePresetInput");
-      if (!input) return;
-      const value = normalizeTagText(input.value);
-      if (!value) return;
+      if (!input) {
+        showToast("프리셋 입력칸을 찾지 못했습니다");
+        return;
+      }
+
+      const value = normalizeTagText(input.value || "");
+      if (!value) {
+        showToast("프리셋 이름을 입력해주세요");
+        input.focus();
+        return;
+      }
+
+      QUICK_PRESETS = uniqueArray(QUICK_PRESETS || []);
 
       if (editingPreset && editingPreset !== value) {
         QUICK_PRESETS = QUICK_PRESETS.map((item) => item === editingPreset ? value : item);
       } else if (!QUICK_PRESETS.includes(value)) {
         QUICK_PRESETS.push(value);
+      } else {
+        showToast("이미 있는 프리셋입니다");
       }
 
       QUICK_PRESETS = uniqueArray(QUICK_PRESETS);
       saveQuickPresets();
+
       editingPreset = "";
       input.value = "";
       renderQuickPresetButtons();
@@ -349,13 +364,17 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       showToast("빠른 시작 프리셋이 저장되었습니다");
     }
 
-    function deleteSelectedPresetItem() {
+    function deleteSelectedPresetItem(event) {
+      if (event && event.preventDefault) event.preventDefault();
+
       if (!editingPreset) {
         showToast("삭제할 프리셋을 먼저 선택해주세요");
         return;
       }
-      QUICK_PRESETS = QUICK_PRESETS.filter((item) => item !== editingPreset);
+
+      QUICK_PRESETS = uniqueArray(QUICK_PRESETS || []).filter((item) => item !== editingPreset);
       saveQuickPresets();
+
       editingPreset = "";
       if ($("managePresetInput")) $("managePresetInput").value = "";
       renderQuickPresetButtons();
@@ -1747,6 +1766,32 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       updatePwaStatus();
     }
 
+
+    function setupPresetManagerFallbackListeners() {
+      document.addEventListener("click", (event) => {
+        const target = event.target;
+        if (!target) return;
+
+        if (target.id === "savePresetBtn") {
+          event.preventDefault();
+          savePresetItem(event);
+        }
+
+        if (target.id === "deletePresetBtn") {
+          event.preventDefault();
+          deleteSelectedPresetItem(event);
+        }
+      });
+
+      document.addEventListener("keydown", (event) => {
+        if (event.key !== "Enter") return;
+        if (event.target && event.target.id === "managePresetInput") {
+          event.preventDefault();
+          savePresetItem(event);
+        }
+      });
+    }
+
     function setupPwa() {
       if ("serviceWorker" in navigator) {
         window.addEventListener("load", () => {
@@ -1826,14 +1871,6 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       $("deleteReasonDictBtn").addEventListener("click", deleteSelectedReasonDictionaryItem);
       $("saveSensationDictBtn").addEventListener("click", saveSensationDictionaryItem);
       $("deleteSensationDictBtn").addEventListener("click", deleteSelectedSensationDictionaryItem);
-      $("savePresetBtn").addEventListener("click", savePresetItem);
-      $("deletePresetBtn").addEventListener("click", deleteSelectedPresetItem);
-      $("managePresetInput").addEventListener("keydown", (event) => {
-        if (event.key === "Enter") {
-          event.preventDefault();
-          savePresetItem();
-        }
-      });
       $("manageReasonInput").addEventListener("keydown", (event) => {
         if (event.key === "Enter") {
           event.preventDefault();
@@ -1914,6 +1951,7 @@ activeSession = loadActive();
       updateDateControls();
       updateMonthControls();
       validateStartForm();
+      setupPresetManagerFallbackListeners();
       setupPwa();
       renderAll();
     }

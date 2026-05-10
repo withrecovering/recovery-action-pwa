@@ -1,7 +1,7 @@
 {
   "name": "작은 행동 회복 기록",
   "short_name": "회복기록",
-  "description": "빠른 시작 프리셋과 백업 날짜 표시를 추가한 로컬 회복 기록 PWA",
+  "description": "빠른 시작 프리셋 저장 동작을 보강한 로컬 회복 기록 PWA",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
