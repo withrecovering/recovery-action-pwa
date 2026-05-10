@@ -67,7 +67,7 @@
             <div class="chips" id="valueChips"></div>
             
 </div>
-<button class="btn full" id="startBtn">시작 시간 기록하고 시작하기</button>
+<button class="btn full" id="startBtn" type="button" onclick="return startSession(event)">시작 시간 기록하고 시작하기</button>
           <div class="hint">
             시작 버튼을 누르는 순간, 정확한 시작 시간이 저장됩니다.
           </div>
@@ -409,7 +409,7 @@
 
         <div class="card">
           <h2>PWA 설치 상태</h2>
-          <p class="small"><strong>현재 버전: v21.3-tab-lock-escape-fix</strong></p>
+          <p class="small"><strong>현재 버전: v21.4-start-button-fix</strong></p>
           <p class="small" id="pwaStatus">설치 상태를 확인 중입니다.</p>
           <div class="row">
             <button class="btn" id="installBtn" disabled>앱 설치하기</button>

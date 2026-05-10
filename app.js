@@ -1013,9 +1013,19 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
     }
 
     function validateStartForm() {
-      const action = $("actionText").value.trim();
-      const ok = selectedState && action && selectedValues.length > 0;
-      $("startBtn").disabled = !ok;
+      const actionInput = $("actionText");
+      const startBtn = $("startBtn");
+      if (!actionInput || !startBtn) return;
+
+      const action = actionInput.value.trim();
+      const ok = Boolean(selectedState && action && selectedValues.length > 0);
+
+      // 실제 disabled는 걸지 않습니다.
+      // iPad/PWA 환경에서 disabled 상태가 꼬이면 시작 버튼 자체가 막힐 수 있어,
+      // 클릭은 항상 받되 startSession 내부에서 필요한 항목을 안내합니다.
+      startBtn.disabled = false;
+      startBtn.classList.toggle("soft-disabled", !ok);
+      startBtn.setAttribute("aria-disabled", ok ? "false" : "true");
     }
 
     function stateBadgeClass(state) {
@@ -1025,11 +1035,40 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       return "";
     }
 
-    function startSession() {
-      const action = $("actionText").value.trim();
-      if (!selectedState || !action || selectedValues.length === 0) {
-        showToast("상태, 작은 행동, 가치를 입력해주세요");
-        return;
+    function startSession(event) {
+      if (event && event.preventDefault) event.preventDefault();
+
+      if (pendingEnd) {
+        showToast("먼저 현재 기록을 저장하거나 취소해주세요");
+        switchTab("start");
+        return false;
+      }
+
+      if (activeSession && isValidActiveSession(activeSession)) {
+        showToast("이미 진행 중인 기록이 있습니다");
+        switchTab("start");
+        showActiveView();
+        updateFocusLockUi();
+        return false;
+      }
+
+      const actionInput = $("actionText");
+      const action = actionInput ? actionInput.value.trim() : "";
+
+      if (!selectedState) {
+        showToast("지금 상태를 선택해주세요");
+        return false;
+      }
+
+      if (!action) {
+        showToast("작은 행동을 입력해주세요");
+        if (actionInput) actionInput.focus();
+        return false;
+      }
+
+      if (!selectedValues || selectedValues.length === 0) {
+        showToast("연결된 가치를 선택해주세요");
+        return false;
       }
 
       activeSession = {
@@ -1038,10 +1077,9 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
         startAt: nowIso(),
         startMs: Date.now(),
         stateBefore: selectedState,
-        emotionsBefore: selectedEmotions,
+        emotionsBefore: selectedEmotions.slice(),
         actionText: action,
-        values: selectedValues,
-        expectedDifficulty: Number($("difficulty").value)
+        values: selectedValues.slice()
       };
 
       saveActive(activeSession);
@@ -1049,6 +1087,7 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       switchTab("start");
       updateFocusLockUi();
       showToast("시작했습니다");
+      return false;
     }
 
     function showIdleView() {
@@ -1821,6 +1860,16 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
 
 
 
+
+    function setupStartButtonFallbackListener() {
+      document.addEventListener("click", (event) => {
+        const target = event.target && event.target.closest ? event.target.closest("#startBtn") : null;
+        if (!target) return;
+        event.preventDefault();
+        startSession(event);
+      });
+    }
+
     function setupTabFallbackListeners() {
       document.addEventListener("click", (event) => {
         const tab = event.target && event.target.closest ? event.target.closest(".tab") : null;
@@ -1956,7 +2005,6 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
           saveValueDictionaryItem();
         }
       });
-$("startBtn").addEventListener("click", startSession);
       $("pauseBtn").addEventListener("click", () => endSession("여기까지"));
       $("completeBtn").addEventListener("click", () => endSession("완료"));
       $("saveRecordBtn").addEventListener("click", savePendingRecord);
@@ -2010,6 +2058,7 @@ activeSession = loadActive();
       updateDateControls();
       updateMonthControls();
       validateStartForm();
+      setupStartButtonFallbackListener();
       setupTabFallbackListeners();
       setupPresetManagerFallbackListeners();
       setupPwa();
@@ -2023,6 +2072,7 @@ activeSession = loadActive();
 
 
 
+    window.startSession = startSession;
     window.forceUnlockFocusLock = forceUnlockFocusLock;
 
     window.savePresetItem = savePresetItem;
