@@ -56,6 +56,11 @@
             <input id="actionText" type="text" placeholder="예: 물 한 잔 마시기, 식사하기, 3분 걷기, 책 한 쪽 보기, 오늘 할 일 하나 시작하기" />
           </div>
 
+          <div class="field quick-start-field">
+            <label>빠른 시작</label>
+            <div class="chips quick-preset-chips" id="quickPresetChips"></div>
+          </div>
+
           <div class="field">
             <label>연결된 가치</label>
             <div class="chips" id="valueChips"></div>
@@ -395,8 +400,21 @@
         </div>
 
         <div class="card">
+          <h2>내 빠른 시작 프리셋</h2>
+          <div class="dictionary-manager">
+            <input id="managePresetInput" type="text" placeholder="프리셋 추가/수정: 예) 물 마시기, 식사, 책 보기, 걷기" />
+            <div class="row dictionary-actions">
+              <button class="btn secondary" id="savePresetBtn" type="button">프리셋 저장</button>
+              <button class="btn danger" id="deletePresetBtn" type="button">선택 삭제</button>
+            </div>
+            <div class="hint">자주 하는 작은 행동을 저장해두면 시작 탭에서 빠르게 선택할 수 있습니다.</div>
+          </div>
+          <div class="chips dictionary-chips" id="presetDictionaryChips"></div>
+        </div>
+
+        <div class="card">
           <h2>PWA 설치 상태</h2>
-          <p class="small"><strong>현재 버전: v20.2-focus-lock-settings-fix</strong></p>
+          <p class="small"><strong>현재 버전: v21-quick-presets</strong></p>
           <p class="small" id="pwaStatus">설치 상태를 확인 중입니다.</p>
           <div class="row">
             <button class="btn" id="installBtn" disabled>앱 설치하기</button>
@@ -414,6 +432,7 @@
             앱/브라우저 설정이나 캐시 정리에 따라 데이터가 사라질 수 있으니,
             가끔 JSON으로 내보내기 해두는 것을 추천합니다.
           </p>
+          <p class="small" id="lastBackupAt">최근 백업 없음</p>
 
           <div class="row">
             <button class="btn" id="exportBtn">JSON 백업 내보내기</button>
