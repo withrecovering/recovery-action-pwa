@@ -274,7 +274,7 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
     }
 
     function saveQuickPresets() {
-      localStorage.setItem(QUICK_PRESET_KEY, JSON.stringify(uniqueArray(QUICK_PRESETS)));
+      localStorage.setItem(QUICK_PRESET_KEY, JSON.stringify(uniqueArray(QUICK_PRESETS || [])));
     }
 
     function renderQuickPresetButtons() {
@@ -282,19 +282,24 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       if (!wrap) return;
       wrap.innerHTML = "";
 
-      if (!QUICK_PRESETS || QUICK_PRESETS.length === 0) {
+      const presets = uniqueArray(QUICK_PRESETS || []);
+      if (presets.length === 0) {
         wrap.innerHTML = `<div class="empty inline-empty">프리셋 없음</div>`;
         return;
       }
 
-      QUICK_PRESETS.forEach((item) => {
+      presets.forEach((item) => {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "chip";
         btn.textContent = item;
         btn.dataset.value = item;
         btn.addEventListener("click", () => {
-          $("actionText").value = item;
+          const actionInput = $("actionText");
+          if (actionInput) {
+            actionInput.value = item;
+            actionInput.dispatchEvent(new Event("input", { bubbles: true }));
+          }
           validateStartForm();
           showToast(`${item} 입력됨`);
         });
@@ -307,12 +312,13 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       if (!wrap) return;
       wrap.innerHTML = "";
 
-      if (!QUICK_PRESETS || QUICK_PRESETS.length === 0) {
+      const presets = uniqueArray(QUICK_PRESETS || []);
+      if (presets.length === 0) {
         wrap.innerHTML = `<div class="empty">아직 빠른 시작 프리셋이 없습니다.</div>`;
         return;
       }
 
-      QUICK_PRESETS.forEach((item) => {
+      presets.forEach((item) => {
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "chip selected";
@@ -321,7 +327,11 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
         btn.title = "누르면 입력칸에 불러옵니다";
         btn.addEventListener("click", () => {
           editingPreset = item;
-          $("managePresetInput").value = item;
+          const input = $("managePresetInput");
+          if (input) {
+            input.value = item;
+            input.focus();
+          }
           renderPresetDictionaryChips();
         });
         wrap.appendChild(btn);
@@ -334,34 +344,35 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       const input = $("managePresetInput");
       if (!input) {
         showToast("프리셋 입력칸을 찾지 못했습니다");
-        return;
+        return false;
       }
 
       const value = normalizeTagText(input.value || "");
       if (!value) {
         showToast("프리셋 이름을 입력해주세요");
         input.focus();
-        return;
+        return false;
       }
 
-      QUICK_PRESETS = uniqueArray(QUICK_PRESETS || []);
+      const current = uniqueArray(safeParseArray(QUICK_PRESET_KEY));
+      let next = current.slice();
 
       if (editingPreset && editingPreset !== value) {
-        QUICK_PRESETS = QUICK_PRESETS.map((item) => item === editingPreset ? value : item);
-      } else if (!QUICK_PRESETS.includes(value)) {
-        QUICK_PRESETS.push(value);
-      } else {
-        showToast("이미 있는 프리셋입니다");
+        next = next.map((item) => item === editingPreset ? value : item);
+      } else if (!next.includes(value)) {
+        next.push(value);
       }
 
-      QUICK_PRESETS = uniqueArray(QUICK_PRESETS);
+      QUICK_PRESETS = uniqueArray(next);
       saveQuickPresets();
 
       editingPreset = "";
       input.value = "";
+
       renderQuickPresetButtons();
       renderPresetDictionaryChips();
       showToast("빠른 시작 프리셋이 저장되었습니다");
+      return false;
     }
 
     function deleteSelectedPresetItem(event) {
@@ -369,17 +380,21 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
 
       if (!editingPreset) {
         showToast("삭제할 프리셋을 먼저 선택해주세요");
-        return;
+        return false;
       }
 
-      QUICK_PRESETS = uniqueArray(QUICK_PRESETS || []).filter((item) => item !== editingPreset);
+      const current = uniqueArray(safeParseArray(QUICK_PRESET_KEY));
+      QUICK_PRESETS = current.filter((item) => item !== editingPreset);
       saveQuickPresets();
 
       editingPreset = "";
-      if ($("managePresetInput")) $("managePresetInput").value = "";
+      const input = $("managePresetInput");
+      if (input) input.value = "";
+
       renderQuickPresetButtons();
       renderPresetDictionaryChips();
       showToast("프리셋이 삭제되었습니다");
+      return false;
     }
 
     function getLastBackupAt() {
@@ -1772,12 +1787,12 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
         const target = event.target;
         if (!target) return;
 
-        if (target.id === "savePresetBtn") {
+        if (target.closest && target.closest("#savePresetBtn")) {
           event.preventDefault();
           savePresetItem(event);
         }
 
-        if (target.id === "deletePresetBtn") {
+        if (target.closest && target.closest("#deletePresetBtn")) {
           event.preventDefault();
           deleteSelectedPresetItem(event);
         }
@@ -1860,8 +1875,6 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       renderReasonChips();
 
       renderSensationChips();
-
-      $("difficulty").addEventListener("input", (e) => $("difficultyLabel").textContent = e.target.value);
       $("actionText").addEventListener("input", validateStartForm);
       $("saveEmotionDictBtn").addEventListener("click", saveEmotionDictionaryItem);
       $("deleteEmotionDictBtn").addEventListener("click", deleteSelectedEmotionDictionaryItem);
@@ -1960,6 +1973,10 @@ activeSession = loadActive();
 
     
 
+
+
+    window.savePresetItem = savePresetItem;
+    window.deleteSelectedPresetItem = deleteSelectedPresetItem;
 
     window.addEventListener("beforeunload", (event) => {
       if (!isFocusLocked()) return;
