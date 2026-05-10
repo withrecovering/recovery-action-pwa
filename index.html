@@ -33,6 +33,7 @@
     <div id="focusLockBanner" class="focus-lock-banner">
       현실행동 집중 모드가 켜져 있습니다.
       <div class="focus-lock-note">기록 중에도 백업 탭은 사용할 수 있습니다. 다른 화면은 ‘여기까지’ 또는 ‘완료’로 마무리한 뒤 이동할 수 있습니다.</div>
+      <button class="btn secondary focus-unlock-btn" id="unlockFocusLockBtn" type="button" onclick="return forceUnlockFocusLock(event)">잠금 해제</button>
     </div>
 
     <main>
@@ -408,7 +409,7 @@
 
         <div class="card">
           <h2>PWA 설치 상태</h2>
-          <p class="small"><strong>현재 버전: v21.2-preset-difficulty-fix</strong></p>
+          <p class="small"><strong>현재 버전: v21.3-tab-lock-escape-fix</strong></p>
           <p class="small" id="pwaStatus">설치 상태를 확인 중입니다.</p>
           <div class="row">
             <button class="btn" id="installBtn" disabled>앱 설치하기</button>

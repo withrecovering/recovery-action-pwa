@@ -1,4 +1,4 @@
-const CACHE_NAME = "minwoo-recovery-pwa-v21-2-preset-difficulty-fix";
+const CACHE_NAME = "minwoo-recovery-pwa-v21-3-tab-lock-escape-fix";
 const APP_SHELL = [
   "./",
   "./index.html",

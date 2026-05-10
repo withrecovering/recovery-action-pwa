@@ -1679,7 +1679,10 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
     }
 
     function isFocusLocked() {
-      return Boolean(activeSession || pendingEnd);
+      if (pendingEnd) return true;
+      if (!activeSession) return false;
+      if (!isValidActiveSession(activeSession)) return false;
+      return true;
     }
 
     function getFocusLockMessage() {
@@ -1689,6 +1692,11 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
     }
 
     function updateFocusLockUi() {
+      if (activeSession && !isValidActiveSession(activeSession)) {
+        clearActive();
+        activeSession = null;
+      }
+
       const locked = isFocusLocked();
       const banner = $("focusLockBanner");
       if (banner) banner.classList.toggle("show", locked);
@@ -1721,6 +1729,36 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
+    function forceUnlockFocusLock(event) {
+      if (event && event.preventDefault) event.preventDefault();
+
+      const ok = confirm("진행 중인 기록 잠금을 해제할까요? 현재 진행 중이던 기록은 저장되지 않습니다.");
+      if (!ok) return false;
+
+      pendingEnd = null;
+      activeSession = null;
+      clearActive();
+
+      selectedReason = "";
+      selectedSensation = "";
+
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+
+      showIdleView();
+      updateFocusLockUi();
+      switchTab("start");
+      showToast("기록 잠금을 해제했습니다");
+      return false;
+    }
+
+    function isStaleActiveSession(session) {
+      if (!session || !session.startMs) return false;
+      const ageMs = Date.now() - Number(session.startMs);
+      return Number.isFinite(ageMs) && ageMs > 12 * 60 * 60 * 1000;
+    }
     function exportJson() {
       const records = loadRecords();
       const payload = { app: "작은 행동 회복 기록", version: 2, exportedAt: nowIso(), records };
@@ -1781,6 +1819,16 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       updatePwaStatus();
     }
 
+
+
+    function setupTabFallbackListeners() {
+      document.addEventListener("click", (event) => {
+        const tab = event.target && event.target.closest ? event.target.closest(".tab") : null;
+        if (!tab || !tab.dataset || !tab.dataset.tab) return;
+        event.preventDefault();
+        switchTab(tab.dataset.tab);
+      });
+    }
 
     function setupPresetManagerFallbackListeners() {
       document.addEventListener("click", (event) => {
@@ -1914,8 +1962,6 @@ $("startBtn").addEventListener("click", startSession);
       $("saveRecordBtn").addEventListener("click", savePendingRecord);
       $("cancelEndBtn").addEventListener("click", cancelEnd);
 
-      document.querySelectorAll(".tab").forEach((b) => b.addEventListener("click", () => switchTab(b.dataset.tab)));
-
       $("exportBtn").addEventListener("click", exportJson);
       $("importBtn").addEventListener("click", () => $("importFile").click());
       $("importFile").addEventListener("change", (e) => {
@@ -1946,7 +1992,7 @@ $("startBtn").addEventListener("click", startSession);
       $("jumpNowBtn").addEventListener("click", jumpToNow);
       $("jumpFirstRecordBtn").addEventListener("click", jumpToFirstRecord);
 activeSession = loadActive();
-      if (activeSession && !isValidActiveSession(activeSession)) {
+      if (activeSession && (!isValidActiveSession(activeSession) || isStaleActiveSession(activeSession))) {
         clearActive();
         activeSession = null;
       }
@@ -1964,6 +2010,7 @@ activeSession = loadActive();
       updateDateControls();
       updateMonthControls();
       validateStartForm();
+      setupTabFallbackListeners();
       setupPresetManagerFallbackListeners();
       setupPwa();
       renderAll();
@@ -1974,6 +2021,9 @@ activeSession = loadActive();
     
 
 
+
+
+    window.forceUnlockFocusLock = forceUnlockFocusLock;
 
     window.savePresetItem = savePresetItem;
     window.deleteSelectedPresetItem = deleteSelectedPresetItem;
