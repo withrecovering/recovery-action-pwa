@@ -1045,7 +1045,7 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       }
 
       if (activeSession && isValidActiveSession(activeSession)) {
-        showToast("이미 진행 중인 기록이 있습니다");
+        showToast("이미 기록이 시작되어 있어요. 현재 기록으로 돌아왔습니다.");
         switchTab("start");
         showActiveView();
         updateFocusLockUi();
@@ -1086,7 +1086,7 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       showActiveView();
       switchTab("start");
       updateFocusLockUi();
-      showToast("시작했습니다");
+      showToast("기록이 시작되었습니다");
       return false;
     }
 
@@ -1863,8 +1863,11 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
 
     function setupStartButtonFallbackListener() {
       document.addEventListener("click", (event) => {
+        if (event.defaultPrevented) return;
+
         const target = event.target && event.target.closest ? event.target.closest("#startBtn") : null;
         if (!target) return;
+
         event.preventDefault();
         startSession(event);
       });

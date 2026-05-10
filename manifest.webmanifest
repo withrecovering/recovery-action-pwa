@@ -1,7 +1,7 @@
 {
   "name": "작은 행동 회복 기록",
   "short_name": "회복기록",
-  "description": "시작 버튼 클릭 동작과 빠른 시작 프리셋을 안정화한 로컬 회복 기록 PWA",
+  "description": "시작 버튼 중복 호출을 막고 시작 안내 문구를 다듬은 로컬 회복 기록 PWA",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
