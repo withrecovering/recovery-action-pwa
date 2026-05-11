@@ -1881,6 +1881,97 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       showToast("JSON 백업 파일을 만들었습니다");
     }
 
+
+    function csvEscape(value) {
+      const text = Array.isArray(value) ? value.join("; ") : String(value ?? "");
+      const normalized = text.replace(/\r?\n/g, " ").trim();
+      if (/[",\n]/.test(normalized)) return `"${normalized.replace(/"/g, '""')}"`;
+      return normalized;
+    }
+
+    function getCsvDateParts(iso) {
+      if (!iso) return { date: "", weekday: "", time: "" };
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return { date: "", weekday: "", time: "" };
+      const weekdays = ["일", "월", "화", "수", "목", "금", "토"];
+      const date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const weekday = weekdays[d.getDay()];
+      const time = `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:${String(d.getSeconds()).padStart(2, "0")}`;
+      return { date, weekday, time };
+    }
+
+    function recordsToCsv(records) {
+      const headers = [
+        "id",
+        "date",
+        "weekday",
+        "startAt",
+        "endAt",
+        "startTime",
+        "endTime",
+        "durationSec",
+        "durationText",
+        "stateBefore",
+        "emotionsBefore",
+        "actionText",
+        "values",
+        "primaryValue",
+        "endType",
+        "reasonEnded",
+        "sensationAfter",
+        "createdAt"
+      ];
+
+      const rows = records
+        .slice()
+        .sort((a, b) => new Date(a.startAt) - new Date(b.startAt))
+        .map((record) => {
+          const start = getCsvDateParts(record.startAt);
+          const end = getCsvDateParts(record.endAt);
+          const values = Array.isArray(record.values) ? record.values : [];
+          const emotions = Array.isArray(record.emotionsBefore) ? record.emotionsBefore : [];
+          return [
+            record.id || "",
+            start.date,
+            start.weekday,
+            record.startAt || "",
+            record.endAt || "",
+            start.time,
+            end.time,
+            record.durationSec || 0,
+            formatDurationShort(record.durationSec || 0),
+            record.stateBefore || "",
+            emotions,
+            record.actionText || "",
+            values,
+            values[0] || "",
+            record.endType || "",
+            record.reasonEnded || "",
+            record.sensationAfter || "",
+            record.createdAt || ""
+          ].map(csvEscape).join(",");
+        });
+
+      return "\ufeff" + [headers.map(csvEscape).join(","), ...rows].join("\n");
+    }
+
+    function exportCsv() {
+      const records = loadRecords();
+      const csv = recordsToCsv(records);
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `recovery-records-${getTodayKey()}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setLastBackupAt();
+      showToast("CSV 파일을 만들었습니다");
+    }
+
+
     function importJsonFile(file) {
       const reader = new FileReader();
       reader.onload = () => {
@@ -2081,6 +2172,7 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       $("cancelEndBtn").addEventListener("click", cancelEnd);
 
       $("exportBtn").addEventListener("click", exportJson);
+      $("exportCsvBtn").addEventListener("click", exportCsv);
       $("importBtn").addEventListener("click", () => $("importFile").click());
       $("importFile").addEventListener("change", (e) => {
         const file = e.target.files[0];
