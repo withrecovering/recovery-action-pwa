@@ -1249,25 +1249,87 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       renderTodayList(todayRecords);
     }
 
-    function valueColor(record) {
-      const value = (record.values || [])[0] || "";
-      const map = {
-        "공부": "#1d4ed8",
-        "몸 돌봄": "#166534",
-        "회복": "#1f5f5b",
-        "자립": "#7c3aed",
-        "연결": "#be123c",
-        "공공성": "#0f766e",
-        "창작": "#c2410c",
-        "함께 회복": "#0369a1",
-        "감각에너지": "#4d7c0f",
-        "자기존중": "#854d0e"
-      };
-      return map[value] || "#1f5f5b";
+    function hashStringToIndex(text, modulo) {
+      let hash = 0;
+      const source = String(text || "");
+      for (let i = 0; i < source.length; i += 1) {
+        hash = ((hash << 5) - hash) + source.charCodeAt(i);
+        hash |= 0;
+      }
+      return Math.abs(hash) % modulo;
     }
+
+    function getRecordPrimaryValue(record) {
+      const values = Array.isArray(record && record.values) ? record.values.filter(Boolean) : [];
+      return values[0] || "기타";
+    }
+
+    function valueColor(recordOrValue) {
+      const value = typeof recordOrValue === "string" ? recordOrValue : getRecordPrimaryValue(recordOrValue);
+
+      const map = {
+        "공부": "#2563eb",
+        "몸 돌봄": "#16a34a",
+        "회복": "#0f766e",
+        "휴식": "#7c3aed",
+        "자립": "#9333ea",
+        "연결": "#db2777",
+        "공공성": "#0891b2",
+        "창작": "#ea580c",
+        "함께 회복": "#0284c7",
+        "감각에너지": "#65a30d",
+        "자기존중": "#ca8a04",
+        "운동": "#dc2626",
+        "가사": "#475569",
+        "명상": "#4f46e5",
+        "식사": "#15803d"
+      };
+
+      if (map[value]) return map[value];
+
+      const palette = [
+        "#2563eb", "#16a34a", "#7c3aed", "#db2777", "#ea580c",
+        "#0891b2", "#65a30d", "#ca8a04", "#4f46e5", "#dc2626",
+        "#0f766e", "#9333ea", "#475569"
+      ];
+
+      return palette[hashStringToIndex(value, palette.length)];
+    }
+
+    function getValueLegend(records) {
+      const map = new Map();
+      records.forEach((record) => {
+        const value = getRecordPrimaryValue(record);
+        if (!map.has(value)) map.set(value, valueColor(value));
+      });
+      return [...map.entries()].map(([value, color]) => ({ value, color }));
+    }
+
+    function renderValueLegend(records, containerId) {
+      const wrap = $(containerId);
+      if (!wrap) return;
+
+      const legend = getValueLegend(records);
+      wrap.innerHTML = "";
+
+      if (legend.length === 0) {
+        wrap.classList.add("hidden");
+        return;
+      }
+
+      wrap.classList.remove("hidden");
+      legend.forEach(({ value, color }) => {
+        const item = document.createElement("span");
+        item.className = "value-legend-item";
+        item.innerHTML = `<span class="value-legend-dot" style="background:${color}"></span>${escapeHtml(value)}`;
+        wrap.appendChild(item);
+      });
+    }
+
 
     function renderDaybar(records) {
       const bar = $("daybar");
+      if (!bar) return;
       bar.innerHTML = "";
 
       if (isSelectedToday()) {
@@ -1281,18 +1343,21 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
 
       records.forEach((record) => {
         const start = minutesSinceMidnight(record.startAt);
-        const durationMin = Math.max(record.durationSec / 60, 0.5);
+        const durationMin = Math.max((record.durationSec || 0) / 60, 0.5);
         const seg = document.createElement("div");
         seg.className = "bar-segment";
-        seg.title = `${record.actionText} · ${formatDurationShort(record.durationSec)}`;
+        seg.title = `${record.actionText || "작은 행동"} · ${getRecordPrimaryValue(record)} · ${formatDurationShort(record.durationSec || 0)}`;
         seg.style.left = `${Math.max(0, start / 1440 * 100)}%`;
         seg.style.width = `${Math.max(0.4, durationMin / 1440 * 100)}%`;
         seg.style.background = valueColor(record);
         bar.appendChild(seg);
       });
+
+      renderValueLegend(records, "todayValueLegend");
     }
 
     function renderVerticalTimeline(records) {
+      renderValueLegend(records, "timelineValueLegend");
       const timeline = $("verticalTimeline");
       const scroll = $("timelineScroll");
       if (!timeline || !scroll) return;
@@ -1347,10 +1412,12 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
         block.style.top = `${topPx}px`;
         block.style.height = `${heightPx}px`;
         block.style.borderColor = valueColor(record);
+        block.style.borderLeftWidth = "5px";
         block.style.background = `${hexToRgba(valueColor(record), 0.10)}`;
         block.style.color = valueColor(record);
 
         const exactTime = `${formatTimeOnly(record.startAt)}–${formatTimeOnly(record.endAt)}`;
+        const primaryValue = getRecordPrimaryValue(record);
         const values = (record.values || []).map(escapeHtml).join(", ") || "가치 없음";
 
         block.innerHTML = `

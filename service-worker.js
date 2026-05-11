@@ -1,4 +1,4 @@
-const CACHE_NAME = "minwoo-recovery-pwa-v21-5-start-message-fix";
+const CACHE_NAME = "minwoo-recovery-pwa-v21-6-value-colors";
 const APP_SHELL = [
   "./",
   "./index.html",

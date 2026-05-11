@@ -1322,3 +1322,44 @@
     .btn.soft-disabled {
       opacity: 0.72;
     }
+
+
+    .value-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+      align-items: center;
+    }
+
+    .value-legend.hidden {
+      display: none;
+    }
+
+    .value-legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .value-legend-dot,
+    .value-dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 999px;
+      display: inline-block;
+      flex: 0 0 auto;
+    }
+
+    .timeline-values {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
