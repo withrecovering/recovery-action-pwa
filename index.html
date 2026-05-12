@@ -30,6 +30,12 @@
       <button class="tab" data-tab="settings">백업</button>
     </div>
 
+    <div id="focusLockBanner" class="focus-lock-banner">
+      현실행동 집중 모드가 켜져 있습니다.
+      <div class="focus-lock-note">기록 중에도 백업 탭은 사용할 수 있습니다. 다른 화면은 ‘여기까지’ 또는 ‘완료’로 마무리한 뒤 이동할 수 있습니다.</div>
+      <button class="btn secondary focus-unlock-btn" id="unlockFocusLockBtn" type="button" onclick="return forceUnlockFocusLock(event)">잠금 해제</button>
+    </div>
+
     <main>
       <section id="startTab">
         <div id="idleView" class="card">
@@ -79,7 +85,6 @@
             <div class="row">
               <button class="btn warning" id="pauseBtn">여기까지 기록하기</button>
               <button class="btn" id="completeBtn">완료로 기록하기</button>
-              <a class="btn secondary cancel-active-link" id="cancelActiveBtn" href="?resetActive=1">기록 취소</a>
             </div>
 
             <div class="hint">
@@ -323,7 +328,6 @@
       <section id="recordsTab" class="hidden">
         <div class="card">
           <h2>누적 기록</h2>
-          <p class="small" id="recordsHelpHint">저장된 기록 카드에서 종료 시간을 수정할 수 있습니다.</p>
           <div id="recordsList"></div>
         </div>
       </section>
@@ -407,7 +411,7 @@
 
         <div class="card">
           <h2>PWA 설치 상태</h2>
-          <p class="small"><strong>현재 버전: v23.3-cancel-via-reset-link</strong></p>
+          <p class="small"><strong>현재 버전: v22-focus-overlay</strong></p>
           <p class="small" id="pwaStatus">설치 상태를 확인 중입니다.</p>
           <div class="row">
             <button class="btn" id="installBtn" disabled>앱 설치하기</button>
@@ -457,5 +461,22 @@
 
   <div id="toast" class="toast">알림</div>
   <script src="app.js"></script>
-</body>
+
+    <div id="focusOverlay" class="focus-overlay hidden" aria-live="polite">
+      <div class="focus-overlay-card">
+        <div class="focus-overlay-kicker">현실행동 집중 모드</div>
+        <h2 id="focusOverlayAction">진행 중인 행동</h2>
+        <div id="focusOverlayTimer" class="focus-overlay-timer">00:00:00</div>
+        <p id="focusOverlayMeta" class="focus-overlay-meta">기록 중입니다.</p>
+        <div class="focus-overlay-actions">
+          <button class="btn" id="focusPauseBtn" type="button">여기까지</button>
+          <button class="btn" id="focusCompleteBtn" type="button">완료</button>
+          <button class="btn secondary" id="focusBackupBtn" type="button">백업</button>
+          <button class="btn secondary" id="focusUnlockBtn" type="button">잠금 해제</button>
+        </div>
+        <p class="focus-overlay-note">다른 화면은 잠시 접어둡니다. 이 행동을 마무리하거나, 필요하면 스스로 잠금 해제를 선택할 수 있습니다.</p>
+      </div>
+    </div>
+
+  </body>
 </html>

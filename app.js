@@ -39,6 +39,8 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
     let pendingEnd = null;
     let timerInterval = null;
     let deferredInstallPrompt = null;
+    let wakeLockSentinel = null;
+    let focusOverlayEnabled = true;
     let timelineScale = Number(localStorage.getItem("minwoo_timeline_scale_v1")) || 10;
     let selectedDateKey = localStorage.getItem("recovery_selected_date_v1") || getTodayKey();
     let selectedMonthKey = localStorage.getItem("recovery_selected_month_v1") || getTodayKey().slice(0, 7);
@@ -1083,56 +1085,78 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       };
 
       saveActive(activeSession);
+      focusOverlayEnabled = true;
       showActiveView();
       switchTab("start");
       updateFocusLockUi();
+      updateFocusOverlay();
+      requestWakeLock();
       showToast("기록이 시작되었습니다");
       return false;
     }
 
 
-    function resetActiveFromUrlIfRequested() {
-      const params = new URLSearchParams(window.location.search);
-      if (!params.has("resetActive")) return false;
-
-      localStorage.removeItem(ACTIVE_KEY);
-      localStorage.removeItem(OLD_ACTIVE_KEY);
-      activeSession = null;
-      pendingEnd = null;
-
-      if (timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
-      }
-
+    async function requestWakeLock() {
+      if (!("wakeLock" in navigator)) return;
       try {
-        const cleanUrl = window.location.pathname || "./";
-        window.history.replaceState({}, document.title, cleanUrl);
+        wakeLockSentinel = await navigator.wakeLock.request("screen");
+        wakeLockSentinel.addEventListener("release", () => {
+          wakeLockSentinel = null;
+        });
       } catch {
-        // ignore
+        wakeLockSentinel = null;
       }
-
-      return true;
     }
 
-function cancelActiveSession(event) {
-      if (event && event.preventDefault) event.preventDefault();
-
-      const ok = confirm("현재 진행 중인 기록을 저장하지 않고 취소할까요?");
-      if (!ok) return false;
-
-      localStorage.removeItem(ACTIVE_KEY);
-      localStorage.removeItem(OLD_ACTIVE_KEY);
-      activeSession = null;
-      pendingEnd = null;
-
-      if (timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
+    async function releaseWakeLock() {
+      if (!wakeLockSentinel) return;
+      try {
+        await wakeLockSentinel.release();
+      } catch {
+        // ignore
+      } finally {
+        wakeLockSentinel = null;
       }
+    }
 
-      window.location.href = `${window.location.pathname}?resetActive=1`;
-      return false;
+    function shouldShowFocusOverlay() {
+      return focusOverlayEnabled && Boolean(activeSession && isValidActiveSession(activeSession) && !pendingEnd);
+    }
+
+    function updateFocusOverlay() {
+      const overlay = $("focusOverlay");
+      if (!overlay) return;
+
+      const show = shouldShowFocusOverlay();
+      overlay.classList.toggle("hidden", !show);
+      document.body.classList.toggle("focus-overlay-open", show);
+
+      if (!show) return;
+
+      const elapsed = Math.floor((Date.now() - Number(activeSession.startMs || Date.now())) / 1000);
+      const values = Array.isArray(activeSession.values) ? activeSession.values.join(", ") : "";
+      const emotions = Array.isArray(activeSession.emotionsBefore) ? activeSession.emotionsBefore.join(", ") : "";
+
+      $("focusOverlayAction").textContent = activeSession.actionText || "진행 중인 행동";
+      $("focusOverlayTimer").textContent = formatDuration(elapsed);
+      $("focusOverlayMeta").innerHTML = `
+        시작: ${formatDateTime(activeSession.startAt)}<br />
+        상태: ${escapeHtml(activeSession.stateBefore || "기록 중")}
+        ${emotions ? ` · 감정: ${escapeHtml(emotions)}` : ""}
+        ${values ? ` · 가치: ${escapeHtml(values)}` : ""}
+      `;
+    }
+
+    function hideFocusOverlayTemporarily() {
+      focusOverlayEnabled = false;
+      updateFocusOverlay();
+      switchTab("settings");
+      showToast("백업 탭을 열었습니다");
+    }
+
+    function restoreFocusOverlay() {
+      focusOverlayEnabled = true;
+      updateFocusOverlay();
     }
 
 
@@ -1158,12 +1182,14 @@ function cancelActiveSession(event) {
       updateTimer();
       if (timerInterval) clearInterval(timerInterval);
       timerInterval = setInterval(updateTimer, 1000);
+      updateFocusOverlay();
     }
 
     function updateTimer() {
       if (!activeSession) return;
       const elapsed = Math.floor((Date.now() - Number(activeSession.startMs || Date.now())) / 1000);
-      $("timer").textContent = formatDuration(elapsed);
+      if ($("timer")) $("timer").textContent = formatDuration(elapsed);
+      updateFocusOverlay();
     }
 
     function endSession(type) {
@@ -1196,6 +1222,10 @@ function cancelActiveSession(event) {
       $("idleView").classList.add("hidden");
       $("activeView").classList.add("hidden");
       $("endView").classList.remove("hidden");
+
+      focusOverlayEnabled = false;
+      updateFocusOverlay();
+      releaseWakeLock();
 
       if (timerInterval) clearInterval(timerInterval);
     }
@@ -1230,10 +1260,13 @@ function cancelActiveSession(event) {
       clearActive();
 
       resetStartFormSoft();
+      focusOverlayEnabled = true;
       showIdleView();
       updateDateControls();
       renderAll();
       updateFocusLockUi();
+      updateFocusOverlay();
+      releaseWakeLock();
       showToast("회복 기록이 저장되었습니다");
       switchTab("today");
     }
@@ -1260,8 +1293,11 @@ function cancelActiveSession(event) {
       pendingEnd = null;
       selectedReason = "";
       selectedSensation = "";
+      focusOverlayEnabled = true;
       showActiveView();
       updateFocusLockUi();
+      updateFocusOverlay();
+      requestWakeLock();
     }
 
     function getTodayRecords() {
@@ -1776,91 +1812,6 @@ function cancelActiveSession(event) {
       }
     }
 
-
-    function pad2(n) {
-      return String(n).padStart(2, "0");
-    }
-
-    function formatLocalDateTimeForEdit(iso) {
-      const d = new Date(iso);
-      if (Number.isNaN(d.getTime())) return "";
-      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
-    }
-
-    function parseEditedEndTime(input, startIso) {
-      const text = String(input || "").trim();
-      if (!text) return null;
-
-      const start = new Date(startIso);
-      if (Number.isNaN(start.getTime())) return null;
-
-      // HH:mm 또는 HH:mm:ss 입력이면 시작일 날짜를 기준으로 해석합니다.
-      const timeOnly = text.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
-      if (timeOnly) {
-        const h = Number(timeOnly[1]);
-        const m = Number(timeOnly[2]);
-        const s = Number(timeOnly[3] || 0);
-        if (h < 0 || h > 23 || m < 0 || m > 59 || s < 0 || s > 59) return null;
-
-        const d = new Date(start);
-        d.setHours(h, m, s, 0);
-        return d;
-      }
-
-      // YYYY-MM-DD HH:mm 또는 YYYY-MM-DDTHH:mm 형식 지원
-      const normalized = text.replace(" ", "T");
-      const date = new Date(normalized);
-      if (Number.isNaN(date.getTime())) return null;
-      return date;
-    }
-
-    function editRecordEndTime(id) {
-      const records = loadRecords();
-      const record = records.find((r) => r.id === id);
-      if (!record) {
-        showToast("수정할 기록을 찾지 못했습니다");
-        return;
-      }
-
-      const current = formatLocalDateTimeForEdit(record.endAt || record.startAt);
-      const input = prompt(
-        "새 종료 시간을 입력해주세요.\n예: 14:30 또는 2026-05-08 14:30",
-        current
-      );
-
-      if (input === null) return;
-
-      const newEnd = parseEditedEndTime(input, record.startAt);
-      if (!newEnd) {
-        showToast("시간 형식을 확인해주세요");
-        return;
-      }
-
-      const start = new Date(record.startAt);
-      if (Number.isNaN(start.getTime())) {
-        showToast("시작 시간이 올바르지 않습니다");
-        return;
-      }
-
-      if (newEnd < start) {
-        showToast("종료 시간은 시작 시간보다 뒤여야 합니다");
-        return;
-      }
-
-      const durationSec = Math.max(0, Math.floor((newEnd.getTime() - start.getTime()) / 1000));
-
-      record.endAt = newEnd.toISOString();
-      record.endMs = newEnd.getTime();
-      record.durationSec = durationSec;
-      record.correctedAt = nowIso();
-      record.correctionType = "end_time_edited";
-
-      saveRecords(records);
-      renderAll();
-      showToast("종료 시간을 수정했습니다");
-    }
-
-
     function renderRecords() {
       const records = loadRecords();
       const list = $("recordsList");
@@ -1875,17 +1826,12 @@ function cancelActiveSession(event) {
         const div = document.createElement("div");
         div.className = "record";
         const stateClass = stateBadgeClass(record.stateBefore);
-        const correctedBadge = record.correctionType === "end_time_edited"
-          ? `<span class="badge">종료 시간 정정됨</span>`
-          : "";
-
         div.innerHTML = `
           <div class="record-title">${escapeHtml(record.actionText)}</div>
           <div>
             <span class="badge ${stateClass}">${record.stateBefore}</span>
             <span class="badge">${record.endType}</span>
             <span class="badge">${formatDurationShort(record.durationSec)}</span>
-            ${correctedBadge}
           </div>
           <div class="meta">
             시작: ${formatDateTime(record.startAt)}<br/>
@@ -1894,13 +1840,10 @@ function cancelActiveSession(event) {
             가치: ${(record.values || []).map(escapeHtml).join(", ") || "기록 없음"}<br/>
             이유: ${escapeHtml(record.stopReason || "기록 없음")} · 감각: ${escapeHtml(record.sensationAfter || "기록 없음")}
           </div>
-          <div class="row">
-            <button class="btn secondary edit-end-time">종료 시간 수정</button>
-            <button class="btn danger delete-record">삭제</button>
+<div class="row">
+<button class="btn danger delete-record">삭제</button>
           </div>
         `;
-
-        div.querySelector(".edit-end-time").addEventListener("click", () => editRecordEndTime(record.id));
         div.querySelector(".delete-record").addEventListener("click", () => deleteRecord(record.id));
         list.appendChild(div);
       });
@@ -1937,13 +1880,31 @@ function cancelActiveSession(event) {
     }
 
     function updateFocusLockUi() {
+      if (activeSession && !isValidActiveSession(activeSession)) {
+        clearActive();
+        activeSession = null;
+      }
+
+      const locked = isFocusLocked();
+      const banner = $("focusLockBanner");
+      if (banner) banner.classList.toggle("show", locked);
+
       document.querySelectorAll(".tab").forEach((tab) => {
-        tab.classList.remove("locked");
-        tab.setAttribute("aria-disabled", "false");
+        const shouldLock = locked && !["start", "settings"].includes(tab.dataset.tab);
+        tab.classList.toggle("locked", shouldLock);
+        tab.setAttribute("aria-disabled", shouldLock ? "true" : "false");
       });
     }
 
     function switchTab(tab) {
+      const allowedWhileLocked = tab === "start" || tab === "settings";
+      if (isFocusLocked() && !allowedWhileLocked) {
+        showToast(getFocusLockMessage());
+        updateFocusLockUi();
+        updateFocusOverlay();
+        return;
+      }
+
       document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
 
       $("startTab").classList.toggle("hidden", tab !== "start");
@@ -1953,12 +1914,48 @@ function cancelActiveSession(event) {
       $("recordsTab").classList.toggle("hidden", tab !== "records");
       $("settingsTab").classList.toggle("hidden", tab !== "settings");
 
+      if (tab === "start" && activeSession && !pendingEnd) {
+        restoreFocusOverlay();
+      }
+
+      updateFocusLockUi();
+      updateFocusOverlay();
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
-    
+    function forceUnlockFocusLock(event) {
+      if (event && event.preventDefault) event.preventDefault();
 
-    
+      const ok = confirm("진행 중인 기록 잠금을 해제할까요? 현재 진행 중이던 기록은 저장되지 않습니다.");
+      if (!ok) return false;
+
+      pendingEnd = null;
+      activeSession = null;
+      clearActive();
+
+      selectedReason = "";
+      selectedSensation = "";
+
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+
+      focusOverlayEnabled = true;
+      showIdleView();
+      updateFocusLockUi();
+      updateFocusOverlay();
+      releaseWakeLock();
+      switchTab("start");
+      showToast("기록 잠금을 해제했습니다");
+      return false;
+    }
+
+    function isStaleActiveSession(session) {
+      if (!session || !session.startMs) return false;
+      const ageMs = Date.now() - Number(session.startMs);
+      return Number.isFinite(ageMs) && ageMs > 12 * 60 * 60 * 1000;
+    }
     function exportJson() {
       const records = loadRecords();
       const payload = { app: "작은 행동 회복 기록", version: 2, exportedAt: nowIso(), records };
@@ -2013,8 +2010,6 @@ function cancelActiveSession(event) {
         "endType",
         "reasonEnded",
         "sensationAfter",
-        "correctionType",
-        "correctedAt",
         "createdAt"
       ];
 
@@ -2044,8 +2039,6 @@ function cancelActiveSession(event) {
             record.endType || "",
             record.reasonEnded || "",
             record.sensationAfter || "",
-            record.correctionType || "",
-            record.correctedAt || "",
             record.createdAt || ""
           ].map(csvEscape).join(",");
         });
@@ -2116,9 +2109,6 @@ function cancelActiveSession(event) {
 
 
 
-
-
-    
 
     function setupStartButtonFallbackListener() {
       document.addEventListener("click", (event) => {
@@ -2269,6 +2259,10 @@ function cancelActiveSession(event) {
       });
       $("pauseBtn").addEventListener("click", () => endSession("여기까지"));
       $("completeBtn").addEventListener("click", () => endSession("완료"));
+      $("focusPauseBtn").addEventListener("click", () => endSession("여기까지"));
+      $("focusCompleteBtn").addEventListener("click", () => endSession("완료"));
+      $("focusBackupBtn").addEventListener("click", hideFocusOverlayTemporarily);
+      $("focusUnlockBtn").addEventListener("click", forceUnlockFocusLock);
       $("saveRecordBtn").addEventListener("click", savePendingRecord);
       $("cancelEndBtn").addEventListener("click", cancelEnd);
 
@@ -2302,20 +2296,22 @@ function cancelActiveSession(event) {
       });
       $("jumpNowBtn").addEventListener("click", jumpToNow);
       $("jumpFirstRecordBtn").addEventListener("click", jumpToFirstRecord);
-resetActiveFromUrlIfRequested();
-      activeSession = loadActive();
+activeSession = loadActive();
       if (activeSession && (!isValidActiveSession(activeSession) || isStaleActiveSession(activeSession))) {
         clearActive();
         activeSession = null;
       }
 
       if (activeSession) {
+        focusOverlayEnabled = true;
         showActiveView();
         switchTab("start");
+        requestWakeLock();
       } else {
         showIdleView();
       }
       updateFocusLockUi();
+      updateFocusOverlay();
 
       renderCustomEmotionChips();
       renderCustomValueChips();
@@ -2337,10 +2333,18 @@ resetActiveFromUrlIfRequested();
 
 
     window.startSession = startSession;
-    window.cancelActiveSession = cancelActiveSession;
+    window.forceUnlockFocusLock = forceUnlockFocusLock;
 
     window.savePresetItem = savePresetItem;
     window.deleteSelectedPresetItem = deleteSelectedPresetItem;
+
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible" && shouldShowFocusOverlay()) {
+        requestWakeLock();
+        updateFocusOverlay();
+      }
+    });
 
     window.addEventListener("beforeunload", (event) => {
       if (!isFocusLocked()) return;
