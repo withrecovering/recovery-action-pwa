@@ -50,7 +50,7 @@
       display: grid;
       grid-template-columns: repeat(6, 1fr);
       gap: 8px;
-      margin: 14px 0 16px;
+      margin: 10px 0 12px;
       position: sticky;
       top: 0;
       background: rgba(247,244,238,0.88);
@@ -1362,4 +1362,9 @@
       display: inline-flex;
       align-items: center;
       gap: 5px;
+    }
+
+
+    main {
+      margin-top: 0;
     }

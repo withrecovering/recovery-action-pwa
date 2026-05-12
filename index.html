@@ -29,7 +29,6 @@
       <button class="tab" data-tab="records">기록</button>
       <button class="tab" data-tab="settings">백업</button>
     </div>
-</div>
 
     <main>
       <section id="startTab">
@@ -80,6 +79,7 @@
             <div class="row">
               <button class="btn warning" id="pauseBtn">여기까지 기록하기</button>
               <button class="btn" id="completeBtn">완료로 기록하기</button>
+              <button class="btn secondary" id="cancelActiveBtn" type="button">기록 취소</button>
             </div>
 
             <div class="hint">
@@ -323,6 +323,7 @@
       <section id="recordsTab" class="hidden">
         <div class="card">
           <h2>누적 기록</h2>
+          <p class="small" id="recordsHelpHint">저장된 기록 카드에서 종료 시간을 수정할 수 있습니다.</p>
           <div id="recordsList"></div>
         </div>
       </section>
@@ -406,7 +407,7 @@
 
         <div class="card">
           <h2>PWA 설치 상태</h2>
-          <p class="small"><strong>현재 버전: v23-edit-end-time</strong></p>
+          <p class="small"><strong>현재 버전: v23.1-layout-cancel-fix</strong></p>
           <p class="small" id="pwaStatus">설치 상태를 확인 중입니다.</p>
           <div class="row">
             <button class="btn" id="installBtn" disabled>앱 설치하기</button>

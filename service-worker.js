@@ -1,4 +1,4 @@
-const CACHE_NAME = "minwoo-recovery-pwa-v23-edit-end-time";
+const CACHE_NAME = "minwoo-recovery-pwa-v23-1-layout-cancel-fix";
 const APP_SHELL = [
   "./",
   "./index.html",

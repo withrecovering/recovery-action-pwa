@@ -1090,6 +1090,30 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       return false;
     }
 
+function cancelActiveSession() {
+      if (!activeSession) {
+        showToast("취소할 진행 기록이 없습니다");
+        return;
+      }
+
+      const ok = confirm("현재 진행 중인 기록을 저장하지 않고 취소할까요?");
+      if (!ok) return;
+
+      activeSession = null;
+      pendingEnd = null;
+      clearActive();
+
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+
+      showIdleView();
+      updateFocusLockUi();
+      showToast("진행 중인 기록을 취소했습니다");
+    }
+
+
     function showIdleView() {
       $("idleView").classList.remove("hidden");
       $("activeView").classList.add("hidden");
@@ -2220,6 +2244,7 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       });
       $("pauseBtn").addEventListener("click", () => endSession("여기까지"));
       $("completeBtn").addEventListener("click", () => endSession("완료"));
+      $("cancelActiveBtn").addEventListener("click", cancelActiveSession);
       $("saveRecordBtn").addEventListener("click", savePendingRecord);
       $("cancelEndBtn").addEventListener("click", cancelEnd);
 
