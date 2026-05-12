@@ -1928,8 +1928,15 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
 
     function isFocusLocked() {
       if (pendingEnd) return true;
+
       if (!activeSession) return false;
-      if (!isValidActiveSession(activeSession)) return false;
+
+      if (!isValidActiveSession(activeSession)) {
+        clearActive();
+        activeSession = null;
+        return false;
+      }
+
       return true;
     }
 
@@ -1976,6 +1983,9 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
 
       if (tab === "start" && activeSession && !pendingEnd) {
         restoreFocusOverlay();
+      } else if (!isFocusLocked()) {
+        focusOverlayEnabled = true;
+        updateFocusOverlay();
       }
 
       updateFocusLockUi();
@@ -1983,11 +1993,8 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
-    function forceUnlockFocusLock(event) {
+    function resetStuckLock(event) {
       if (event && event.preventDefault) event.preventDefault();
-
-      const ok = confirm("진행 중인 기록 잠금을 해제할까요? 현재 진행 중이던 기록은 저장되지 않습니다.");
-      if (!ok) return false;
 
       pendingEnd = null;
       activeSession = null;
@@ -1995,26 +2002,36 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
 
       selectedReason = "";
       selectedSensation = "";
+      focusOverlayEnabled = true;
 
       if (timerInterval) {
         clearInterval(timerInterval);
         timerInterval = null;
       }
 
-      focusOverlayEnabled = true;
       showIdleView();
       updateFocusLockUi();
       updateFocusOverlay();
       releaseWakeLock();
       switchTab("start");
-      showToast("기록 잠금을 해제했습니다");
+      showToast("잠금 상태를 초기화했습니다");
       return false;
+    }
+
+
+    function forceUnlockFocusLock(event) {
+      if (event && event.preventDefault) event.preventDefault();
+
+      const ok = confirm("진행 중인 기록 잠금을 해제할까요? 현재 진행 중이던 기록은 저장되지 않습니다.");
+      if (!ok) return false;
+
+      return resetStuckLock(event);
     }
 
     function isStaleActiveSession(session) {
       if (!session || !session.startMs) return false;
       const ageMs = Date.now() - Number(session.startMs);
-      return Number.isFinite(ageMs) && ageMs > 12 * 60 * 60 * 1000;
+      return Number.isFinite(ageMs) && ageMs > 6 * 60 * 60 * 1000;
     }
     function exportJson() {
       const records = loadRecords();
@@ -2323,6 +2340,7 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       $("focusCompleteBtn").addEventListener("click", () => endSession("완료"));
       $("focusBackupBtn").addEventListener("click", hideFocusOverlayTemporarily);
       $("focusUnlockBtn").addEventListener("click", forceUnlockFocusLock);
+      $("focusResetBtn").addEventListener("click", resetStuckLock);
       $("saveRecordBtn").addEventListener("click", savePendingRecord);
       $("cancelEndBtn").addEventListener("click", cancelEnd);
 
@@ -2394,6 +2412,7 @@ activeSession = loadActive();
 
     window.startSession = startSession;
     window.forceUnlockFocusLock = forceUnlockFocusLock;
+    window.resetStuckLock = resetStuckLock;
 
     window.savePresetItem = savePresetItem;
     window.deleteSelectedPresetItem = deleteSelectedPresetItem;

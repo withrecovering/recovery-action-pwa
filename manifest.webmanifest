@@ -1,7 +1,7 @@
 {
   "name": "작은 행동 회복 기록",
   "short_name": "회복기록",
-  "description": "기록 중 화면 유지 상태 표시와 자동 재요청을 보강한 로컬 회복 기록 PWA",
+  "description": "탭 잠금이 꼬였을 때 초기화할 수 있는 복구 장치를 추가한 로컬 회복 기록 PWA",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

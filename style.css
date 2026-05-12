@@ -1493,3 +1493,8 @@
       color: #64748b;
       border-color: rgba(100,116,139,0.22);
     }
+
+
+    .focus-unlock-btn + .focus-unlock-btn {
+      margin-left: 8px;
+    }
