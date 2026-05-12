@@ -39,11 +39,6 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
     let pendingEnd = null;
     let timerInterval = null;
     let deferredInstallPrompt = null;
-    let wakeLockSentinel = null;
-    let wakeLockRetryInterval = null;
-    let wakeLockStatusText = "화면 유지: 확인 중";
-    let wakeLockStatusKind = "checking";
-    let focusOverlayEnabled = true;
     let timelineScale = Number(localStorage.getItem("minwoo_timeline_scale_v1")) || 10;
     let selectedDateKey = localStorage.getItem("recovery_selected_date_v1") || getTodayKey();
     let selectedMonthKey = localStorage.getItem("recovery_selected_month_v1") || getTodayKey().slice(0, 7);
@@ -1088,137 +1083,12 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       };
 
       saveActive(activeSession);
-      focusOverlayEnabled = true;
       showActiveView();
       switchTab("start");
       updateFocusLockUi();
-      updateFocusOverlay();
-      requestWakeLock();
       showToast("기록이 시작되었습니다");
       return false;
     }
-
-
-    async function requestWakeLock() {
-      if (!("wakeLock" in navigator)) {
-        setWakeLockStatus("화면 유지: 미지원", "unsupported");
-        return Promise.resolve(false);
-      }
-      if (!shouldShowFocusOverlay()) {
-        setWakeLockStatus("화면 유지: 대기 중", "unsupported");
-        return Promise.resolve(false);
-      }
-      if (wakeLockSentinel) {
-        setWakeLockStatus("화면 유지: 켜짐", "on");
-        return Promise.resolve(true);
-      }
-      return navigator.wakeLock.request("screen")
-        .then((sentinel) => {
-          wakeLockSentinel = sentinel;
-          setWakeLockStatus("화면 유지: 켜짐", "on");
-          wakeLockSentinel.addEventListener("release", () => {
-            wakeLockSentinel = null;
-            if (shouldShowFocusOverlay()) setWakeLockStatus("화면 유지: 다시 요청 중", "off");
-            else setWakeLockStatus("화면 유지: 꺼짐", "unsupported");
-          });
-          return true;
-        })
-        .catch(() => {
-          wakeLockSentinel = null;
-          setWakeLockStatus("화면 유지: 요청 실패", "off");
-          return false;
-        });
-    }
-
-    async function releaseWakeLock() {
-      stopWakeLockRetry();
-      if (!wakeLockSentinel) {
-        setWakeLockStatus("화면 유지: 꺼짐", "unsupported");
-        return Promise.resolve();
-      }
-      return wakeLockSentinel.release()
-        .catch(() => {})
-        .finally(() => {
-          wakeLockSentinel = null;
-          setWakeLockStatus("화면 유지: 꺼짐", "unsupported");
-        });
-    }
-
-    function setWakeLockStatus(text, kind = "checking") {
-      wakeLockStatusText = text;
-      wakeLockStatusKind = kind;
-      renderWakeLockStatus();
-    }
-
-    function renderWakeLockStatus() {
-      const el = $("wakeLockStatus");
-      if (!el) return;
-      el.textContent = wakeLockStatusText || "화면 유지: 확인 중";
-      el.classList.remove("on", "off", "unsupported");
-      if (wakeLockStatusKind === "on") el.classList.add("on");
-      else if (wakeLockStatusKind === "off") el.classList.add("off");
-      else if (wakeLockStatusKind === "unsupported") el.classList.add("unsupported");
-    }
-
-    function startWakeLockRetry() {
-      if (wakeLockRetryInterval) return;
-      wakeLockRetryInterval = setInterval(() => {
-        if (!shouldShowFocusOverlay()) return;
-        if (document.visibilityState && document.visibilityState !== "visible") return;
-        if (!wakeLockSentinel) requestWakeLock();
-        else setWakeLockStatus("화면 유지: 켜짐", "on");
-      }, 30000);
-    }
-
-    function stopWakeLockRetry() {
-      if (!wakeLockRetryInterval) return;
-      clearInterval(wakeLockRetryInterval);
-      wakeLockRetryInterval = null;
-    }
-
-    function shouldShowFocusOverlay() {
-      return focusOverlayEnabled && Boolean(activeSession && isValidActiveSession(activeSession) && !pendingEnd);
-    }
-
-    function updateFocusOverlay() {
-      const overlay = $("focusOverlay");
-      if (!overlay) return;
-      const show = shouldShowFocusOverlay();
-      overlay.classList.toggle("hidden", !show);
-      document.body.classList.toggle("focus-overlay-open", show);
-      if (!show) {
-        stopWakeLockRetry();
-        renderWakeLockStatus();
-        return;
-      }
-      startWakeLockRetry();
-      const elapsed = Math.floor((Date.now() - Number(activeSession.startMs || Date.now())) / 1000);
-      const values = Array.isArray(activeSession.values) ? activeSession.values.join(", ") : "";
-      const emotions = Array.isArray(activeSession.emotionsBefore) ? activeSession.emotionsBefore.join(", ") : "";
-      $("focusOverlayAction").textContent = activeSession.actionText || "진행 중인 행동";
-      $("focusOverlayTimer").textContent = formatDuration(elapsed);
-      $("focusOverlayMeta").innerHTML = `
-        시작: ${formatDateTime(activeSession.startAt)}<br />
-        상태: ${escapeHtml(activeSession.stateBefore || "기록 중")}
-        ${emotions ? ` · 감정: ${escapeHtml(emotions)}` : ""}
-        ${values ? ` · 가치: ${escapeHtml(values)}` : ""}
-      `;
-      renderWakeLockStatus();
-    }
-
-    function hideFocusOverlayTemporarily() {
-      focusOverlayEnabled = false;
-      updateFocusOverlay();
-      switchTab("settings");
-      showToast("백업 탭을 열었습니다");
-    }
-
-    function restoreFocusOverlay() {
-      focusOverlayEnabled = true;
-      updateFocusOverlay();
-      requestWakeLock();
-    }
-
 
     function showIdleView() {
       $("idleView").classList.remove("hidden");
@@ -1242,14 +1112,12 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       updateTimer();
       if (timerInterval) clearInterval(timerInterval);
       timerInterval = setInterval(updateTimer, 1000);
-      updateFocusOverlay();
     }
 
     function updateTimer() {
       if (!activeSession) return;
       const elapsed = Math.floor((Date.now() - Number(activeSession.startMs || Date.now())) / 1000);
-      if ($("timer")) $("timer").textContent = formatDuration(elapsed);
-      updateFocusOverlay();
+      $("timer").textContent = formatDuration(elapsed);
     }
 
     function endSession(type) {
@@ -1282,10 +1150,6 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       $("idleView").classList.add("hidden");
       $("activeView").classList.add("hidden");
       $("endView").classList.remove("hidden");
-
-      focusOverlayEnabled = false;
-      updateFocusOverlay();
-      releaseWakeLock();
 
       if (timerInterval) clearInterval(timerInterval);
     }
@@ -1320,13 +1184,10 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       clearActive();
 
       resetStartFormSoft();
-      focusOverlayEnabled = true;
       showIdleView();
       updateDateControls();
       renderAll();
       updateFocusLockUi();
-      updateFocusOverlay();
-      releaseWakeLock();
       showToast("회복 기록이 저장되었습니다");
       switchTab("today");
     }
@@ -1353,11 +1214,8 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       pendingEnd = null;
       selectedReason = "";
       selectedSensation = "";
-      focusOverlayEnabled = true;
       showActiveView();
       updateFocusLockUi();
-      updateFocusOverlay();
-      requestWakeLock();
     }
 
     function getTodayRecords() {
@@ -1928,15 +1786,8 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
 
     function isFocusLocked() {
       if (pendingEnd) return true;
-
       if (!activeSession) return false;
-
-      if (!isValidActiveSession(activeSession)) {
-        clearActive();
-        activeSession = null;
-        return false;
-      }
-
+      if (!isValidActiveSession(activeSession)) return false;
       return true;
     }
 
@@ -1947,18 +1798,6 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
     }
 
     function updateFocusLockUi() {
-      if (activeSession && !isValidActiveSession(activeSession)) {
-        clearActive();
-        activeSession = null;
-      }
-
-      const locked = isFocusLocked();
-      const banner = $("focusLockBanner");
-      if (banner) banner.classList.toggle("show", locked);
-
-      const globalReset = $("globalResetLockBtn");
-      if (globalReset) globalReset.classList.toggle("hidden", !locked);
-
       document.querySelectorAll(".tab").forEach((tab) => {
         tab.classList.remove("locked");
         tab.setAttribute("aria-disabled", "false");
@@ -1975,57 +1814,12 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       $("recordsTab").classList.toggle("hidden", tab !== "records");
       $("settingsTab").classList.toggle("hidden", tab !== "settings");
 
-      // 집중은 탭 잠금이 아니라 오버레이가 담당합니다.
-      // start로 돌아오면 진행 중 기록의 오버레이를 다시 보여줍니다.
-      if (tab === "start" && activeSession && !pendingEnd) {
-        restoreFocusOverlay();
-      }
-
-      updateFocusLockUi();
-      updateFocusOverlay();
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
-    function resetStuckLock(event) {
-      if (event && event.preventDefault) event.preventDefault();
+    
 
-      pendingEnd = null;
-      activeSession = null;
-      clearActive();
-
-      selectedReason = "";
-      selectedSensation = "";
-      focusOverlayEnabled = true;
-
-      if (timerInterval) {
-        clearInterval(timerInterval);
-        timerInterval = null;
-      }
-
-      showIdleView();
-      updateFocusLockUi();
-      updateFocusOverlay();
-      releaseWakeLock();
-      switchTab("start");
-      showToast("잠금 상태를 초기화했습니다");
-      return false;
-    }
-
-
-    function forceUnlockFocusLock(event) {
-      if (event && event.preventDefault) event.preventDefault();
-
-      const ok = confirm("진행 중인 기록 잠금을 해제할까요? 현재 진행 중이던 기록은 저장되지 않습니다.");
-      if (!ok) return false;
-
-      return resetStuckLock(event);
-    }
-
-    function isStaleActiveSession(session) {
-      if (!session || !session.startMs) return false;
-      const ageMs = Date.now() - Number(session.startMs);
-      return Number.isFinite(ageMs) && ageMs > 6 * 60 * 60 * 1000;
-    }
+    
     function exportJson() {
       const records = loadRecords();
       const payload = { app: "작은 행동 회복 기록", version: 2, exportedAt: nowIso(), records };
@@ -2329,11 +2123,6 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       });
       $("pauseBtn").addEventListener("click", () => endSession("여기까지"));
       $("completeBtn").addEventListener("click", () => endSession("완료"));
-      $("focusPauseBtn").addEventListener("click", () => endSession("여기까지"));
-      $("focusCompleteBtn").addEventListener("click", () => endSession("완료"));
-      $("focusBackupBtn").addEventListener("click", hideFocusOverlayTemporarily);
-      $("focusUnlockBtn").addEventListener("click", forceUnlockFocusLock);
-      $("focusResetBtn").addEventListener("click", resetStuckLock);
       $("saveRecordBtn").addEventListener("click", savePendingRecord);
       $("cancelEndBtn").addEventListener("click", cancelEnd);
 
@@ -2374,15 +2163,12 @@ activeSession = loadActive();
       }
 
       if (activeSession) {
-        focusOverlayEnabled = true;
         showActiveView();
         switchTab("start");
-        requestWakeLock();
       } else {
         showIdleView();
       }
       updateFocusLockUi();
-      updateFocusOverlay();
 
       renderCustomEmotionChips();
       renderCustomValueChips();
@@ -2404,21 +2190,9 @@ activeSession = loadActive();
 
 
     window.startSession = startSession;
-    window.forceUnlockFocusLock = forceUnlockFocusLock;
-    window.resetStuckLock = resetStuckLock;
 
     window.savePresetItem = savePresetItem;
     window.deleteSelectedPresetItem = deleteSelectedPresetItem;
-
-
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible" && shouldShowFocusOverlay()) {
-        requestWakeLock();
-        updateFocusOverlay();
-      } else if (document.visibilityState !== "visible") {
-        setWakeLockStatus("화면 유지: 앱이 다시 보이면 재요청", "off");
-      }
-    });
 
     window.addEventListener("beforeunload", (event) => {
       if (!isFocusLocked()) return;
