@@ -1730,6 +1730,91 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       }
     }
 
+
+    function pad2(n) {
+      return String(n).padStart(2, "0");
+    }
+
+    function formatLocalDateTimeForEdit(iso) {
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return "";
+      return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+    }
+
+    function parseEditedEndTime(input, startIso) {
+      const text = String(input || "").trim();
+      if (!text) return null;
+
+      const start = new Date(startIso);
+      if (Number.isNaN(start.getTime())) return null;
+
+      // HH:mm 또는 HH:mm:ss 입력이면 시작일 날짜를 기준으로 해석합니다.
+      const timeOnly = text.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+      if (timeOnly) {
+        const h = Number(timeOnly[1]);
+        const m = Number(timeOnly[2]);
+        const s = Number(timeOnly[3] || 0);
+        if (h < 0 || h > 23 || m < 0 || m > 59 || s < 0 || s > 59) return null;
+
+        const d = new Date(start);
+        d.setHours(h, m, s, 0);
+        return d;
+      }
+
+      // YYYY-MM-DD HH:mm 또는 YYYY-MM-DDTHH:mm 형식 지원
+      const normalized = text.replace(" ", "T");
+      const date = new Date(normalized);
+      if (Number.isNaN(date.getTime())) return null;
+      return date;
+    }
+
+    function editRecordEndTime(id) {
+      const records = loadRecords();
+      const record = records.find((r) => r.id === id);
+      if (!record) {
+        showToast("수정할 기록을 찾지 못했습니다");
+        return;
+      }
+
+      const current = formatLocalDateTimeForEdit(record.endAt || record.startAt);
+      const input = prompt(
+        "새 종료 시간을 입력해주세요.\n예: 14:30 또는 2026-05-08 14:30",
+        current
+      );
+
+      if (input === null) return;
+
+      const newEnd = parseEditedEndTime(input, record.startAt);
+      if (!newEnd) {
+        showToast("시간 형식을 확인해주세요");
+        return;
+      }
+
+      const start = new Date(record.startAt);
+      if (Number.isNaN(start.getTime())) {
+        showToast("시작 시간이 올바르지 않습니다");
+        return;
+      }
+
+      if (newEnd < start) {
+        showToast("종료 시간은 시작 시간보다 뒤여야 합니다");
+        return;
+      }
+
+      const durationSec = Math.max(0, Math.floor((newEnd.getTime() - start.getTime()) / 1000));
+
+      record.endAt = newEnd.toISOString();
+      record.endMs = newEnd.getTime();
+      record.durationSec = durationSec;
+      record.correctedAt = nowIso();
+      record.correctionType = "end_time_edited";
+
+      saveRecords(records);
+      renderAll();
+      showToast("종료 시간을 수정했습니다");
+    }
+
+
     function renderRecords() {
       const records = loadRecords();
       const list = $("recordsList");
@@ -1744,12 +1829,17 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
         const div = document.createElement("div");
         div.className = "record";
         const stateClass = stateBadgeClass(record.stateBefore);
+        const correctedBadge = record.correctionType === "end_time_edited"
+          ? `<span class="badge">종료 시간 정정됨</span>`
+          : "";
+
         div.innerHTML = `
           <div class="record-title">${escapeHtml(record.actionText)}</div>
           <div>
             <span class="badge ${stateClass}">${record.stateBefore}</span>
             <span class="badge">${record.endType}</span>
             <span class="badge">${formatDurationShort(record.durationSec)}</span>
+            ${correctedBadge}
           </div>
           <div class="meta">
             시작: ${formatDateTime(record.startAt)}<br/>
@@ -1758,10 +1848,13 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
             가치: ${(record.values || []).map(escapeHtml).join(", ") || "기록 없음"}<br/>
             이유: ${escapeHtml(record.stopReason || "기록 없음")} · 감각: ${escapeHtml(record.sensationAfter || "기록 없음")}
           </div>
-<div class="row">
-<button class="btn danger delete-record">삭제</button>
+          <div class="row">
+            <button class="btn secondary edit-end-time">종료 시간 수정</button>
+            <button class="btn danger delete-record">삭제</button>
           </div>
         `;
+
+        div.querySelector(".edit-end-time").addEventListener("click", () => editRecordEndTime(record.id));
         div.querySelector(".delete-record").addEventListener("click", () => deleteRecord(record.id));
         list.appendChild(div);
       });
@@ -1874,6 +1967,8 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
         "endType",
         "reasonEnded",
         "sensationAfter",
+        "correctionType",
+        "correctedAt",
         "createdAt"
       ];
 
@@ -1903,6 +1998,8 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
             record.endType || "",
             record.reasonEnded || "",
             record.sensationAfter || "",
+            record.correctionType || "",
+            record.correctedAt || "",
             record.createdAt || ""
           ].map(csvEscape).join(",");
         });

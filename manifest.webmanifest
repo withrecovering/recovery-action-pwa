@@ -1,7 +1,7 @@
 {
   "name": "작은 행동 회복 기록",
   "short_name": "회복기록",
-  "description": "탭 잠금과 집중 오버레이를 제거하고 기본 기록 흐름을 안정화한 로컬 회복 기록 PWA",
+  "description": "기록 카드에서 종료 시간을 수정해 행동-기록 일치도를 높일 수 있는 로컬 회복 기록 PWA",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
