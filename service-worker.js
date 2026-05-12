@@ -1,4 +1,4 @@
-const CACHE_NAME = "minwoo-recovery-pwa-v23-2-cancel-button-fix";
+const CACHE_NAME = "minwoo-recovery-pwa-v23-3-cancel-via-reset-link";
 const APP_SHELL = [
   "./",
   "./index.html",

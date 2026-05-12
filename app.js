@@ -1090,37 +1090,48 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       return false;
     }
 
-function cancelActiveSession(event) {
-      if (event && event.preventDefault) event.preventDefault();
 
-      if (!activeSession) {
-        pendingEnd = null;
-        clearActive();
-        showIdleView();
-        updateFocusLockUi();
-        showToast("진행 중인 기록이 없어 시작 화면으로 돌아왔습니다");
-        return false;
-      }
+    function resetActiveFromUrlIfRequested() {
+      const params = new URLSearchParams(window.location.search);
+      if (!params.has("resetActive")) return false;
 
-      const ok = confirm("현재 진행 중인 기록을 저장하지 않고 취소할까요?");
-      if (!ok) return false;
-
+      localStorage.removeItem(ACTIVE_KEY);
+      localStorage.removeItem(OLD_ACTIVE_KEY);
       activeSession = null;
       pendingEnd = null;
-      clearActive();
-
-      selectedReason = "";
-      selectedSensation = "";
 
       if (timerInterval) {
         clearInterval(timerInterval);
         timerInterval = null;
       }
 
-      showIdleView();
-      updateFocusLockUi();
-      switchTab("start");
-      showToast("진행 중인 기록을 취소했습니다");
+      try {
+        const cleanUrl = window.location.pathname || "./";
+        window.history.replaceState({}, document.title, cleanUrl);
+      } catch {
+        // ignore
+      }
+
+      return true;
+    }
+
+function cancelActiveSession(event) {
+      if (event && event.preventDefault) event.preventDefault();
+
+      const ok = confirm("현재 진행 중인 기록을 저장하지 않고 취소할까요?");
+      if (!ok) return false;
+
+      localStorage.removeItem(ACTIVE_KEY);
+      localStorage.removeItem(OLD_ACTIVE_KEY);
+      activeSession = null;
+      pendingEnd = null;
+
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+
+      window.location.href = `${window.location.pathname}?resetActive=1`;
       return false;
     }
 
@@ -2107,15 +2118,7 @@ function cancelActiveSession(event) {
 
 
 
-    function setupCancelButtonFallbackListener() {
-      document.addEventListener("click", (event) => {
-        if (event.defaultPrevented) return;
-        const target = event.target && event.target.closest ? event.target.closest("#cancelActiveBtn") : null;
-        if (!target) return;
-        event.preventDefault();
-        cancelActiveSession(event);
-      });
-    }
+    
 
     function setupStartButtonFallbackListener() {
       document.addEventListener("click", (event) => {
@@ -2299,7 +2302,8 @@ function cancelActiveSession(event) {
       });
       $("jumpNowBtn").addEventListener("click", jumpToNow);
       $("jumpFirstRecordBtn").addEventListener("click", jumpToFirstRecord);
-activeSession = loadActive();
+resetActiveFromUrlIfRequested();
+      activeSession = loadActive();
       if (activeSession && (!isValidActiveSession(activeSession) || isStaleActiveSession(activeSession))) {
         clearActive();
         activeSession = null;
@@ -2318,7 +2322,6 @@ activeSession = loadActive();
       updateDateControls();
       updateMonthControls();
       validateStartForm();
-      setupCancelButtonFallbackListener();
       setupStartButtonFallbackListener();
       setupTabFallbackListeners();
       setupPresetManagerFallbackListeners();

@@ -1368,3 +1368,11 @@
     main {
       margin-top: 0;
     }
+
+
+    .cancel-active-link {
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
