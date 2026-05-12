@@ -1090,18 +1090,27 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       return false;
     }
 
-function cancelActiveSession() {
+function cancelActiveSession(event) {
+      if (event && event.preventDefault) event.preventDefault();
+
       if (!activeSession) {
-        showToast("취소할 진행 기록이 없습니다");
-        return;
+        pendingEnd = null;
+        clearActive();
+        showIdleView();
+        updateFocusLockUi();
+        showToast("진행 중인 기록이 없어 시작 화면으로 돌아왔습니다");
+        return false;
       }
 
       const ok = confirm("현재 진행 중인 기록을 저장하지 않고 취소할까요?");
-      if (!ok) return;
+      if (!ok) return false;
 
       activeSession = null;
       pendingEnd = null;
       clearActive();
+
+      selectedReason = "";
+      selectedSensation = "";
 
       if (timerInterval) {
         clearInterval(timerInterval);
@@ -1110,7 +1119,9 @@ function cancelActiveSession() {
 
       showIdleView();
       updateFocusLockUi();
+      switchTab("start");
       showToast("진행 중인 기록을 취소했습니다");
+      return false;
     }
 
 
@@ -2095,6 +2106,17 @@ function cancelActiveSession() {
 
 
 
+
+    function setupCancelButtonFallbackListener() {
+      document.addEventListener("click", (event) => {
+        if (event.defaultPrevented) return;
+        const target = event.target && event.target.closest ? event.target.closest("#cancelActiveBtn") : null;
+        if (!target) return;
+        event.preventDefault();
+        cancelActiveSession(event);
+      });
+    }
+
     function setupStartButtonFallbackListener() {
       document.addEventListener("click", (event) => {
         if (event.defaultPrevented) return;
@@ -2244,7 +2266,6 @@ function cancelActiveSession() {
       });
       $("pauseBtn").addEventListener("click", () => endSession("여기까지"));
       $("completeBtn").addEventListener("click", () => endSession("완료"));
-      $("cancelActiveBtn").addEventListener("click", cancelActiveSession);
       $("saveRecordBtn").addEventListener("click", savePendingRecord);
       $("cancelEndBtn").addEventListener("click", cancelEnd);
 
@@ -2297,6 +2318,7 @@ activeSession = loadActive();
       updateDateControls();
       updateMonthControls();
       validateStartForm();
+      setupCancelButtonFallbackListener();
       setupStartButtonFallbackListener();
       setupTabFallbackListeners();
       setupPresetManagerFallbackListeners();
@@ -2312,6 +2334,7 @@ activeSession = loadActive();
 
 
     window.startSession = startSession;
+    window.cancelActiveSession = cancelActiveSession;
 
     window.savePresetItem = savePresetItem;
     window.deleteSelectedPresetItem = deleteSelectedPresetItem;
