@@ -1,4 +1,4 @@
-const CACHE_NAME = "minwoo-recovery-pwa-v22-focus-overlay";
+const CACHE_NAME = "minwoo-recovery-pwa-v22-1-wake-lock-status";
 const APP_SHELL = [
   "./",
   "./index.html",

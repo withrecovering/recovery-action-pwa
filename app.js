@@ -40,6 +40,9 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
     let timerInterval = null;
     let deferredInstallPrompt = null;
     let wakeLockSentinel = null;
+    let wakeLockRetryInterval = null;
+    let wakeLockStatusText = "화면 유지: 확인 중";
+    let wakeLockStatusKind = "checking";
     let focusOverlayEnabled = true;
     let timelineScale = Number(localStorage.getItem("minwoo_timeline_scale_v1")) || 10;
     let selectedDateKey = localStorage.getItem("recovery_selected_date_v1") || getTodayKey();
@@ -1097,26 +1100,80 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
 
 
     async function requestWakeLock() {
-      if (!("wakeLock" in navigator)) return;
-      try {
-        wakeLockSentinel = await navigator.wakeLock.request("screen");
-        wakeLockSentinel.addEventListener("release", () => {
-          wakeLockSentinel = null;
-        });
-      } catch {
-        wakeLockSentinel = null;
+      if (!("wakeLock" in navigator)) {
+        setWakeLockStatus("화면 유지: 미지원", "unsupported");
+        return Promise.resolve(false);
       }
+      if (!shouldShowFocusOverlay()) {
+        setWakeLockStatus("화면 유지: 대기 중", "unsupported");
+        return Promise.resolve(false);
+      }
+      if (wakeLockSentinel) {
+        setWakeLockStatus("화면 유지: 켜짐", "on");
+        return Promise.resolve(true);
+      }
+      return navigator.wakeLock.request("screen")
+        .then((sentinel) => {
+          wakeLockSentinel = sentinel;
+          setWakeLockStatus("화면 유지: 켜짐", "on");
+          wakeLockSentinel.addEventListener("release", () => {
+            wakeLockSentinel = null;
+            if (shouldShowFocusOverlay()) setWakeLockStatus("화면 유지: 다시 요청 중", "off");
+            else setWakeLockStatus("화면 유지: 꺼짐", "unsupported");
+          });
+          return true;
+        })
+        .catch(() => {
+          wakeLockSentinel = null;
+          setWakeLockStatus("화면 유지: 요청 실패", "off");
+          return false;
+        });
     }
 
     async function releaseWakeLock() {
-      if (!wakeLockSentinel) return;
-      try {
-        await wakeLockSentinel.release();
-      } catch {
-        // ignore
-      } finally {
-        wakeLockSentinel = null;
+      stopWakeLockRetry();
+      if (!wakeLockSentinel) {
+        setWakeLockStatus("화면 유지: 꺼짐", "unsupported");
+        return Promise.resolve();
       }
+      return wakeLockSentinel.release()
+        .catch(() => {})
+        .finally(() => {
+          wakeLockSentinel = null;
+          setWakeLockStatus("화면 유지: 꺼짐", "unsupported");
+        });
+    }
+
+    function setWakeLockStatus(text, kind = "checking") {
+      wakeLockStatusText = text;
+      wakeLockStatusKind = kind;
+      renderWakeLockStatus();
+    }
+
+    function renderWakeLockStatus() {
+      const el = $("wakeLockStatus");
+      if (!el) return;
+      el.textContent = wakeLockStatusText || "화면 유지: 확인 중";
+      el.classList.remove("on", "off", "unsupported");
+      if (wakeLockStatusKind === "on") el.classList.add("on");
+      else if (wakeLockStatusKind === "off") el.classList.add("off");
+      else if (wakeLockStatusKind === "unsupported") el.classList.add("unsupported");
+    }
+
+    function startWakeLockRetry() {
+      if (wakeLockRetryInterval) return;
+      wakeLockRetryInterval = setInterval(() => {
+        if (!shouldShowFocusOverlay()) return;
+        if (document.visibilityState && document.visibilityState !== "visible") return;
+        if (!wakeLockSentinel) requestWakeLock();
+        else setWakeLockStatus("화면 유지: 켜짐", "on");
+      }, 30000);
+    }
+
+    function stopWakeLockRetry() {
+      if (!wakeLockRetryInterval) return;
+      clearInterval(wakeLockRetryInterval);
+      wakeLockRetryInterval = null;
     }
 
     function shouldShowFocusOverlay() {
@@ -1126,17 +1183,18 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
     function updateFocusOverlay() {
       const overlay = $("focusOverlay");
       if (!overlay) return;
-
       const show = shouldShowFocusOverlay();
       overlay.classList.toggle("hidden", !show);
       document.body.classList.toggle("focus-overlay-open", show);
-
-      if (!show) return;
-
+      if (!show) {
+        stopWakeLockRetry();
+        renderWakeLockStatus();
+        return;
+      }
+      startWakeLockRetry();
       const elapsed = Math.floor((Date.now() - Number(activeSession.startMs || Date.now())) / 1000);
       const values = Array.isArray(activeSession.values) ? activeSession.values.join(", ") : "";
       const emotions = Array.isArray(activeSession.emotionsBefore) ? activeSession.emotionsBefore.join(", ") : "";
-
       $("focusOverlayAction").textContent = activeSession.actionText || "진행 중인 행동";
       $("focusOverlayTimer").textContent = formatDuration(elapsed);
       $("focusOverlayMeta").innerHTML = `
@@ -1145,6 +1203,7 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
         ${emotions ? ` · 감정: ${escapeHtml(emotions)}` : ""}
         ${values ? ` · 가치: ${escapeHtml(values)}` : ""}
       `;
+      renderWakeLockStatus();
     }
 
     function hideFocusOverlayTemporarily() {
@@ -1157,6 +1216,7 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
     function restoreFocusOverlay() {
       focusOverlayEnabled = true;
       updateFocusOverlay();
+      requestWakeLock();
     }
 
 
@@ -2343,6 +2403,8 @@ activeSession = loadActive();
       if (document.visibilityState === "visible" && shouldShowFocusOverlay()) {
         requestWakeLock();
         updateFocusOverlay();
+      } else if (document.visibilityState !== "visible") {
+        setWakeLockStatus("화면 유지: 앱이 다시 보이면 재요청", "off");
       }
     });
 
