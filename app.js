@@ -1956,22 +1956,16 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       const banner = $("focusLockBanner");
       if (banner) banner.classList.toggle("show", locked);
 
+      const globalReset = $("globalResetLockBtn");
+      if (globalReset) globalReset.classList.toggle("hidden", !locked);
+
       document.querySelectorAll(".tab").forEach((tab) => {
-        const shouldLock = locked && !["start", "settings"].includes(tab.dataset.tab);
-        tab.classList.toggle("locked", shouldLock);
-        tab.setAttribute("aria-disabled", shouldLock ? "true" : "false");
+        tab.classList.remove("locked");
+        tab.setAttribute("aria-disabled", "false");
       });
     }
 
     function switchTab(tab) {
-      const allowedWhileLocked = tab === "start" || tab === "settings";
-      if (isFocusLocked() && !allowedWhileLocked) {
-        showToast(getFocusLockMessage());
-        updateFocusLockUi();
-        updateFocusOverlay();
-        return;
-      }
-
       document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
 
       $("startTab").classList.toggle("hidden", tab !== "start");
@@ -1981,11 +1975,10 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       $("recordsTab").classList.toggle("hidden", tab !== "records");
       $("settingsTab").classList.toggle("hidden", tab !== "settings");
 
+      // 집중은 탭 잠금이 아니라 오버레이가 담당합니다.
+      // start로 돌아오면 진행 중 기록의 오버레이를 다시 보여줍니다.
       if (tab === "start" && activeSession && !pendingEnd) {
         restoreFocusOverlay();
-      } else if (!isFocusLocked()) {
-        focusOverlayEnabled = true;
-        updateFocusOverlay();
       }
 
       updateFocusLockUi();

@@ -1498,3 +1498,23 @@
     .focus-unlock-btn + .focus-unlock-btn {
       margin-left: 8px;
     }
+
+
+    .global-reset-lock {
+      position: fixed;
+      right: 14px;
+      bottom: max(14px, env(safe-area-inset-bottom));
+      z-index: 10050;
+      border: 1px solid rgba(31,95,91,0.22);
+      background: rgba(255,255,255,0.94);
+      color: var(--accent);
+      box-shadow: 0 12px 36px rgba(15, 23, 42, 0.18);
+      border-radius: 999px;
+      padding: 10px 13px;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .global-reset-lock.hidden {
+      display: none;
+    }
