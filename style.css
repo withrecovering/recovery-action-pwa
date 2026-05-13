@@ -46,6 +46,14 @@
       line-height: 1.5;
     }
 
+    .micro-guide {
+      margin-top: 6px;
+      color: #7b8190;
+      font-size: 12px;
+      line-height: 1.45;
+      letter-spacing: -0.01em;
+    }
+
     .tabs {
       display: grid;
       grid-template-columns: repeat(6, 1fr);
