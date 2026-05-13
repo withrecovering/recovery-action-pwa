@@ -1826,12 +1826,19 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
         const div = document.createElement("div");
         div.className = "record";
         const stateClass = stateBadgeClass(record.stateBefore);
+        const durationSec = Number(record.durationSec) || 0;
+        const longRecordBadge = durationSec >= 21600
+          ? `<span class="badge long-record-critical">종료 놓침 가능성</span>`
+          : durationSec >= 7200
+            ? `<span class="badge long-record-check">확인 필요</span>`
+            : "";
         div.innerHTML = `
           <div class="record-title">${escapeHtml(record.actionText)}</div>
           <div>
             <span class="badge ${stateClass}">${record.stateBefore}</span>
             <span class="badge">${record.endType}</span>
             <span class="badge">${formatDurationShort(record.durationSec)}</span>
+            ${longRecordBadge}
           </div>
           <div class="meta">
             시작: ${formatDateTime(record.startAt)}<br/>
