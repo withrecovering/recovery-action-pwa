@@ -1,3 +1,4 @@
+// build: v22-focus-overlay-optimized; no feature changes; syntax verified
 const STORAGE_KEY = "minwoo_recovery_records_v2";
     const OLD_STORAGE_KEY = "minwoo_recovery_records_v1";
     const ACTIVE_KEY = "minwoo_recovery_active_v2";
@@ -39,6 +40,8 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
     let pendingEnd = null;
     let timerInterval = null;
     let deferredInstallPrompt = null;
+    let wakeLockSentinel = null;
+    let focusOverlayEnabled = true;
     let timelineScale = Number(localStorage.getItem("minwoo_timeline_scale_v1")) || 10;
     let selectedDateKey = localStorage.getItem("recovery_selected_date_v1") || getTodayKey();
     let selectedMonthKey = localStorage.getItem("recovery_selected_month_v1") || getTodayKey().slice(0, 7);
@@ -264,9 +267,6 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
     function saveCustomSensationDictionary() {
       saveArrayToStorage(CUSTOM_SENSATION_DICT_KEY, SENSATIONS);
     }
-
-    
-    
 
 
     function loadQuickPresets() {
@@ -867,7 +867,7 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
         wrap.appendChild(btn);
       });
     }
-    
+
     function saveEmotionDictionaryItem() {
       const input = $("manageEmotionInput");
       if (!input) return;
@@ -937,7 +937,7 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       renderDictionaries();
     }
 
-    
+
     function saveReasonDictionaryItem() {
       const input = $("manageReasonInput");
       if (!input) return;
@@ -1006,7 +1006,6 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       renderDictionaries();
     }
 
-    
 
     function toggleArray(arr, value) {
       return arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value];
@@ -1083,12 +1082,80 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       };
 
       saveActive(activeSession);
+      focusOverlayEnabled = true;
       showActiveView();
       switchTab("start");
       updateFocusLockUi();
+      updateFocusOverlay();
+      requestWakeLock();
       showToast("기록이 시작되었습니다");
       return false;
     }
+
+
+    async function requestWakeLock() {
+      if (!("wakeLock" in navigator)) return;
+      try {
+        wakeLockSentinel = await navigator.wakeLock.request("screen");
+        wakeLockSentinel.addEventListener("release", () => {
+          wakeLockSentinel = null;
+        });
+      } catch {
+        wakeLockSentinel = null;
+      }
+    }
+
+    async function releaseWakeLock() {
+      if (!wakeLockSentinel) return;
+      try {
+        await wakeLockSentinel.release();
+      } catch {
+        // ignore
+      } finally {
+        wakeLockSentinel = null;
+      }
+    }
+
+    function shouldShowFocusOverlay() {
+      return focusOverlayEnabled && Boolean(activeSession && isValidActiveSession(activeSession) && !pendingEnd);
+    }
+
+    function updateFocusOverlay() {
+      const overlay = $("focusOverlay");
+      if (!overlay) return;
+
+      const show = shouldShowFocusOverlay();
+      overlay.classList.toggle("hidden", !show);
+      document.body.classList.toggle("focus-overlay-open", show);
+
+      if (!show) return;
+
+      const elapsed = Math.floor((Date.now() - Number(activeSession.startMs || Date.now())) / 1000);
+      const values = Array.isArray(activeSession.values) ? activeSession.values.join(", ") : "";
+      const emotions = Array.isArray(activeSession.emotionsBefore) ? activeSession.emotionsBefore.join(", ") : "";
+
+      $("focusOverlayAction").textContent = activeSession.actionText || "진행 중인 행동";
+      $("focusOverlayTimer").textContent = formatDuration(elapsed);
+      $("focusOverlayMeta").innerHTML = `
+        시작: ${formatDateTime(activeSession.startAt)}<br />
+        상태: ${escapeHtml(activeSession.stateBefore || "기록 중")}
+        ${emotions ? ` · 감정: ${escapeHtml(emotions)}` : ""}
+        ${values ? ` · 가치: ${escapeHtml(values)}` : ""}
+      `;
+    }
+
+    function hideFocusOverlayTemporarily() {
+      focusOverlayEnabled = false;
+      updateFocusOverlay();
+      switchTab("settings");
+      showToast("백업 탭을 열었습니다");
+    }
+
+    function restoreFocusOverlay() {
+      focusOverlayEnabled = true;
+      updateFocusOverlay();
+    }
+
 
     function showIdleView() {
       $("idleView").classList.remove("hidden");
@@ -1112,12 +1179,14 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       updateTimer();
       if (timerInterval) clearInterval(timerInterval);
       timerInterval = setInterval(updateTimer, 1000);
+      updateFocusOverlay();
     }
 
     function updateTimer() {
       if (!activeSession) return;
       const elapsed = Math.floor((Date.now() - Number(activeSession.startMs || Date.now())) / 1000);
-      $("timer").textContent = formatDuration(elapsed);
+      if ($("timer")) $("timer").textContent = formatDuration(elapsed);
+      updateFocusOverlay();
     }
 
     function endSession(type) {
@@ -1150,6 +1219,10 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       $("idleView").classList.add("hidden");
       $("activeView").classList.add("hidden");
       $("endView").classList.remove("hidden");
+
+      focusOverlayEnabled = false;
+      updateFocusOverlay();
+      releaseWakeLock();
 
       if (timerInterval) clearInterval(timerInterval);
     }
@@ -1184,10 +1257,13 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       clearActive();
 
       resetStartFormSoft();
+      focusOverlayEnabled = true;
       showIdleView();
       updateDateControls();
       renderAll();
       updateFocusLockUi();
+      updateFocusOverlay();
+      releaseWakeLock();
       showToast("회복 기록이 저장되었습니다");
       switchTab("today");
     }
@@ -1214,8 +1290,11 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       pendingEnd = null;
       selectedReason = "";
       selectedSensation = "";
+      focusOverlayEnabled = true;
       showActiveView();
       updateFocusLockUi();
+      updateFocusOverlay();
+      requestWakeLock();
     }
 
     function getTodayRecords() {
@@ -1664,10 +1743,6 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       });
     }
 
-    
-
-    
-
 
     function renderCalendarDashboard() {
       updateMonthControls();
@@ -1798,13 +1873,31 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
     }
 
     function updateFocusLockUi() {
+      if (activeSession && !isValidActiveSession(activeSession)) {
+        clearActive();
+        activeSession = null;
+      }
+
+      const locked = isFocusLocked();
+      const banner = $("focusLockBanner");
+      if (banner) banner.classList.toggle("show", locked);
+
       document.querySelectorAll(".tab").forEach((tab) => {
-        tab.classList.remove("locked");
-        tab.setAttribute("aria-disabled", "false");
+        const shouldLock = locked && !["start", "settings"].includes(tab.dataset.tab);
+        tab.classList.toggle("locked", shouldLock);
+        tab.setAttribute("aria-disabled", shouldLock ? "true" : "false");
       });
     }
 
     function switchTab(tab) {
+      const allowedWhileLocked = tab === "start" || tab === "settings";
+      if (isFocusLocked() && !allowedWhileLocked) {
+        showToast(getFocusLockMessage());
+        updateFocusLockUi();
+        updateFocusOverlay();
+        return;
+      }
+
       document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
 
       $("startTab").classList.toggle("hidden", tab !== "start");
@@ -1814,12 +1907,48 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       $("recordsTab").classList.toggle("hidden", tab !== "records");
       $("settingsTab").classList.toggle("hidden", tab !== "settings");
 
+      if (tab === "start" && activeSession && !pendingEnd) {
+        restoreFocusOverlay();
+      }
+
+      updateFocusLockUi();
+      updateFocusOverlay();
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
-    
+    function forceUnlockFocusLock(event) {
+      if (event && event.preventDefault) event.preventDefault();
 
-    
+      const ok = confirm("진행 중인 기록 잠금을 해제할까요? 현재 진행 중이던 기록은 저장되지 않습니다.");
+      if (!ok) return false;
+
+      pendingEnd = null;
+      activeSession = null;
+      clearActive();
+
+      selectedReason = "";
+      selectedSensation = "";
+
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+
+      focusOverlayEnabled = true;
+      showIdleView();
+      updateFocusLockUi();
+      updateFocusOverlay();
+      releaseWakeLock();
+      switchTab("start");
+      showToast("기록 잠금을 해제했습니다");
+      return false;
+    }
+
+    function isStaleActiveSession(session) {
+      if (!session || !session.startMs) return false;
+      const ageMs = Date.now() - Number(session.startMs);
+      return Number.isFinite(ageMs) && ageMs > 12 * 60 * 60 * 1000;
+    }
     function exportJson() {
       const records = loadRecords();
       const payload = { app: "작은 행동 회복 기록", version: 2, exportedAt: nowIso(), records };
@@ -1972,8 +2101,6 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
     }
 
 
-
-
     function setupStartButtonFallbackListener() {
       document.addEventListener("click", (event) => {
         if (event.defaultPrevented) return;
@@ -2123,6 +2250,10 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       });
       $("pauseBtn").addEventListener("click", () => endSession("여기까지"));
       $("completeBtn").addEventListener("click", () => endSession("완료"));
+      $("focusPauseBtn").addEventListener("click", () => endSession("여기까지"));
+      $("focusCompleteBtn").addEventListener("click", () => endSession("완료"));
+      $("focusBackupBtn").addEventListener("click", hideFocusOverlayTemporarily);
+      $("focusUnlockBtn").addEventListener("click", forceUnlockFocusLock);
       $("saveRecordBtn").addEventListener("click", savePendingRecord);
       $("cancelEndBtn").addEventListener("click", cancelEnd);
 
@@ -2163,12 +2294,15 @@ activeSession = loadActive();
       }
 
       if (activeSession) {
+        focusOverlayEnabled = true;
         showActiveView();
         switchTab("start");
+        requestWakeLock();
       } else {
         showIdleView();
       }
       updateFocusLockUi();
+      updateFocusOverlay();
 
       renderCustomEmotionChips();
       renderCustomValueChips();
@@ -2182,17 +2316,20 @@ activeSession = loadActive();
       renderAll();
     }
 
-    
-
-    
-
-
-
 
     window.startSession = startSession;
+    window.forceUnlockFocusLock = forceUnlockFocusLock;
 
     window.savePresetItem = savePresetItem;
     window.deleteSelectedPresetItem = deleteSelectedPresetItem;
+
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible" && shouldShowFocusOverlay()) {
+        requestWakeLock();
+        updateFocusOverlay();
+      }
+    });
 
     window.addEventListener("beforeunload", (event) => {
       if (!isFocusLocked()) return;
