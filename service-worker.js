@@ -1,4 +1,4 @@
-const CACHE_NAME = "minwoo-recovery-pwa-v23-long-record-badge";
+const CACHE_NAME = "minwoo-recovery-pwa-v24-missed-end-type";
 const APP_SHELL = [
   "./",
   "./index.html",

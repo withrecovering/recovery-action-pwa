@@ -1574,7 +1574,7 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
           </div>
           <div>
             <span class="badge ${stateBadgeClass(record.stateBefore)}">${record.stateBefore}</span>
-            <span class="badge">${record.endType}</span>
+            <span class="badge ${record.endType === "잠듦/놓침" ? "end-type-missed" : ""}">${record.endType}</span>
             <span class="badge">${escapeHtml(record.sensationAfter || "감각 기록 없음")}</span>
           </div>
         `;
@@ -1836,7 +1836,7 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
           <div class="record-title">${escapeHtml(record.actionText)}</div>
           <div>
             <span class="badge ${stateClass}">${record.stateBefore}</span>
-            <span class="badge">${record.endType}</span>
+            <span class="badge ${record.endType === "잠듦/놓침" ? "end-type-missed" : ""}">${record.endType}</span>
             <span class="badge">${formatDurationShort(record.durationSec)}</span>
             ${getLongRecordBadge(record)}
           </div>
@@ -2264,6 +2264,7 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       });
       $("pauseBtn").addEventListener("click", () => endSession("여기까지"));
       $("completeBtn").addEventListener("click", () => endSession("완료"));
+      $("missedEndBtn").addEventListener("click", () => endSession("잠듦/놓침"));
       $("focusPauseBtn").addEventListener("click", () => endSession("여기까지"));
       $("focusCompleteBtn").addEventListener("click", () => endSession("완료"));
       $("focusBackupBtn").addEventListener("click", hideFocusOverlayTemporarily);

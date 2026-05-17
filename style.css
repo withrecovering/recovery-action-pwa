@@ -1472,3 +1472,10 @@
       background: #fef2f2;
       color: #991b1b;
     }
+
+
+    .end-type-missed {
+      border-color: rgba(79, 70, 229, 0.24);
+      background: #eef2ff;
+      color: #4338ca;
+    }
