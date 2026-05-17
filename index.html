@@ -1,464 +1,210 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>작은 행동 회복 기록</title>
-  <meta name="description" content="작은 행동의 시작과 종료를 가볍게 기록하는 로컬 회복 기록 PWA" />
   <meta name="theme-color" content="#1f5f5b" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icon-192.png" />
   <link rel="stylesheet" href="style.css" />
 </head>
-
 <body>
   <div class="app">
-    <header>
-      <h1>작은 행동 회복 기록</h1>
-      <div class="subtitle">
-        시작한 시간, 멈춘 시간, 다시 돌아온 시간을 모두 회복의 증거로 남깁니다.
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">행동-기록 일치 회복 도구</p>
+        <h1>작은 행동 회복 기록</h1>
+        <p class="subtitle">좋은 행동만 기록하지 않아도 됩니다. 실제로 한 행동과 기록을 부드럽게 맞추는 것이 핵심입니다.</p>
       </div>
+      <p class="version"><strong>현재 버전: v29-clean-rebuild</strong></p>
     </header>
 
-    <div class="tabs">
-      <button class="tab active" data-tab="start">시작</button>
-      <button class="tab" data-tab="today">오늘</button>
-      <button class="tab" data-tab="trophy">트로피</button>
-      <button class="tab" data-tab="calendar">달력</button>
-      <button class="tab" data-tab="records">기록</button>
-      <button class="tab" data-tab="settings">백업</button>
-    </div>
-
+    <nav class="tabs" aria-label="주요 탭">
+      <button class="tab active" type="button" data-tab="start">시작</button>
+      <button class="tab" type="button" data-tab="today">오늘</button>
+      <button class="tab" type="button" data-tab="trophy">트로피</button>
+      <button class="tab" type="button" data-tab="calendar">달력</button>
+      <button class="tab" type="button" data-tab="records">기록</button>
+      <button class="tab" type="button" data-tab="settings">백업</button>
+    </nav>
 
     <main>
-      <section id="startTab">
+      <section id="startTab" class="tab-panel">
         <div id="idleView" class="card">
           <h2>지금 작은 행동을 시작하기</h2>
+          <label>시작 전 상태</label>
+          <div class="chip-row" id="stateChips"></div>
 
-          <div class="field">
-            <label>지금 상태</label>
-            <div class="chips" id="stateChips"></div>
+          <label>지금 감정</label>
+          <div class="chip-row" id="emotionChips"></div>
+
+          <label for="actionText">작은 행동</label>
+          <input id="actionText" type="text" placeholder="예: 치유농업사 교재 읽기, 딴짓, 휴식" autocomplete="off" />
+
+          <label>연결된 가치</label>
+          <div class="chip-row" id="valueChips"></div>
+
+          <div class="preset-area">
+            <p class="small-title">빠른 시작 프리셋</p>
+            <div class="chip-row" id="presetChips"></div>
           </div>
 
-          <div class="field">
-            <label>지금 감정</label>
-            <div class="chips" id="emotionChips"></div>
-
-</div>
-
-          <div class="field">
-            <label for="actionText">오늘 시작할 작은 행동</label>
-            <input id="actionText" type="text" placeholder="예: 물 한 잔 마시기, 식사하기, 3분 걷기, 책 한 쪽 보기, 오늘 할 일 하나 시작하기" />
-          </div>
-
-          <div class="field quick-start-field">
-            <label>빠른 시작</label>
-            <div class="chips quick-preset-chips" id="quickPresetChips"></div>
-          </div>
-
-          <div class="field">
-            <label>연결된 가치</label>
-            <div class="chips" id="valueChips"></div>
-
-</div>
-<button class="btn full" id="startBtn" type="button" onclick="return startSession(event)">시작 시간 기록하고 시작하기</button>
-          <div class="hint">
-            시작 버튼을 누르는 순간, 정확한 시작 시간이 저장됩니다.
-          </div>
+          <button class="btn full" id="startBtn" type="button">시작 시간 기록하고 시작하기</button>
         </div>
 
         <div id="activeView" class="card hidden">
-          <div class="active-panel">
-            <div class="meta">현재 진행 중인 회복 행동</div>
-            <div class="active-action" id="activeAction">-</div>
-            <div class="timer" id="timer">00:00:00</div>
-            <div class="meta" id="activeMeta">-</div>
-
-            <div class="divider"></div>
-
-            <div class="row">
-              <button class="btn warning" id="pauseBtn">여기까지 기록하기</button>
-              <button class="btn" id="completeBtn">완료로 기록하기</button>
-              <button class="btn secondary" id="missedEndBtn" type="button">잠듦/놓침으로 기록하기</button>
-            </div>
-
-            <div class="hint">
-              멈춤도 실패가 아니라 기록입니다. 여기까지 한 만큼 남깁니다.
-            </div>
+          <p class="eyebrow">현재 기록 중</p>
+          <h2 id="activeAction">진행 중인 행동</h2>
+          <div class="timer" id="timer">00:00:00</div>
+          <p class="meta" id="activeMeta"></p>
+          <div class="grid-actions">
+            <button class="btn warning" id="endPauseBtn" type="button">여기까지 기록하기</button>
+            <button class="btn" id="endCompleteBtn" type="button">완료로 기록하기</button>
+            <button class="btn secondary" id="endMissedBtn" type="button">잠듦/놓침으로 기록하기</button>
           </div>
         </div>
 
-        <div id="endView" class="card hidden">
-          <h2 id="endTitle">여기까지 기록하기</h2>
-          <div class="meta" id="endSummary">-</div>
+        <div id="finishView" class="card hidden">
+          <p class="eyebrow">기록 마무리</p>
+          <h2 id="finishTitle">여기까지</h2>
+          <p class="meta" id="finishMeta"></p>
 
-          <div class="field">
-            <label>멈춘/끝낸 이유</label>
-            <div class="chips" id="reasonChips"></div>
+          <label>멈춤/끝낸 이유</label>
+          <div class="chip-row" id="reasonChips"></div>
 
-</div>
+          <label>행동 후 감각</label>
+          <div class="chip-row" id="sensationChips"></div>
 
-          <div class="field">
-            <label>행동 후 감각</label>
-            <div class="chips" id="sensationChips"></div>
-
-</div>
-<div class="row">
-<button class="btn" id="saveRecordBtn">기록 저장하기</button>
-            <button class="btn secondary" id="saveAndPrepareNextBtn" type="button">저장 후 다음 행동 준비</button>
-            <button class="btn danger" id="cancelEndBtn">저장하지 않고 취소</button>
+          <div class="grid-actions">
+            <button class="btn" id="saveRecordBtn" type="button">기록 저장하기</button>
+            <button class="btn secondary" id="saveNextBtn" type="button">저장 후 다음 행동 준비</button>
+            <button class="btn ghost" id="backToActiveBtn" type="button">다시 진행 중으로</button>
           </div>
         </div>
       </section>
 
-      <section id="todayTab" class="hidden">
-        <div id="installBox" class="install-box hidden">
-          안드로이드 Chrome에서 설치 가능 상태가 되면 이곳에 설치 버튼이 나타납니다.
-        </div>
-
-        <div class="card date-nav-card">
-          <div class="date-nav-top">
-            <button class="btn secondary date-prev" type="button">〈 이전날</button>
-            <div class="date-center">
-              <div class="date-kicker">선택한 날짜</div>
-              <div class="selected-date-title">-</div>
-            </div>
-            <button class="btn secondary date-next" type="button">다음날 〉</button>
-          </div>
-          <div class="date-nav-bottom">
-            <input class="selected-date-input" type="date" />
-            <button class="btn secondary date-today" type="button">오늘로 이동</button>
-          </div>
-          <div class="hint">
-            오늘뿐 아니라 지난 날짜의 회복 기록과 트로피도 다시 볼 수 있습니다.
-          </div>
-        </div>
-
-
+      <section id="todayTab" class="tab-panel hidden">
         <div class="card">
-          <h2 id="dashboardTitle">선택한 날짜의 회복 대시보드</h2>
-          <div class="stats-grid">
-            <div class="stat">
-              <div class="num" id="todayCount">0</div>
-              <div class="label">오늘 세션</div>
-            </div>
-            <div class="stat">
-              <div class="num" id="todayTime">0초</div>
-              <div class="label">오늘 총 시간</div>
-            </div>
-            <div class="stat">
-              <div class="num" id="todayReturn">0</div>
-              <div class="label">다시 시작</div>
-            </div>
-            <div class="stat">
-              <div class="num" id="todayValuesCount">0</div>
-              <div class="label">접촉한 가치</div>
-            </div>
-          </div>
-          <div class="today-sentence" id="todaySentence">
-            오늘의 작은 행동이 아직 기록되지 않았습니다.
-          </div>
+          <h2>오늘 하루바</h2>
+          <div id="dayBar" class="day-bar"></div>
+          <div id="valueLegend" class="legend"></div>
         </div>
-
-        <div class="card timeline-card">
-          <h2>00:00–24:00 하루 바</h2>
-          <div class="daybar-wrap">
-            <div class="daybar-labels">
-              <span>00:00</span>
-              <span>06:00</span>
-              <span>12:00</span>
-              <span>18:00</span>
-              <span>24:00</span>
-            </div>
-            <div class="daybar" id="daybar"></div>
-          <div class="value-legend hidden" id="todayValueLegend"></div>
-            <div class="hint">작은 블록 하나도 오늘 사라지지 않은 회복의 흔적입니다.</div>
-          </div>
-        </div>
-
         <div class="card">
           <h2>정밀 세로 타임라인</h2>
-          <div class="timeline-tools">
-            <div class="scale-buttons">
-              <button class="scale-btn" data-scale="2">간단</button>
-              <button class="scale-btn" data-scale="5">표준</button>
-              <button class="scale-btn active" data-scale="10">정밀</button>
-              <button class="scale-btn" data-scale="15">초정밀</button>
-            </div>
-            <div class="row timeline-jump-row">
-              <button class="btn secondary" id="jumpNowBtn">현재 시간으로 이동</button>
-              <button class="btn secondary" id="jumpFirstRecordBtn">오늘 첫 기록으로 이동</button>
-            </div>
-          </div>
-          <div class="timeline-scroll" id="timelineScroll">
-            <div class="vertical-timeline precise" id="verticalTimeline"></div>
-          <div class="value-legend hidden" id="timelineValueLegend"></div>
-          </div>
-          <div class="hint">
-            가로 바는 하루가 채워지는 트로피 감각을, 세로 타임라인은 정확한 시간 기록을 담당합니다.
-          </div>
-        </div>
-
-        <div class="card">
-          <h2 id="selectedRecordListTitle">선택한 날짜 기록 목록</h2>
-          <div id="todayList"></div>
+          <div class="timeline-mode">간단 · 표준 · 정밀 · 초정밀</div>
+          <div id="todayTimeline" class="timeline"></div>
         </div>
       </section>
 
-
-      <section id="trophyTab" class="hidden">
-
-        <div class="card date-nav-card">
-          <div class="date-nav-top">
-            <button class="btn secondary date-prev" type="button">〈 이전날</button>
-            <div class="date-center">
-              <div class="date-kicker">선택한 날짜</div>
-              <div class="selected-date-title">-</div>
-            </div>
-            <button class="btn secondary date-next" type="button">다음날 〉</button>
-          </div>
-          <div class="date-nav-bottom">
-            <input class="selected-date-input" type="date" />
-            <button class="btn secondary date-today" type="button">오늘로 이동</button>
-          </div>
-          <div class="hint">
-            오늘뿐 아니라 지난 날짜의 회복 기록과 트로피도 다시 볼 수 있습니다.
-          </div>
-        </div>
-
-
-        <div class="card trophy-hero">
-          <div class="trophy-kicker" id="trophyKicker">선택한 날짜의 회복 트로피</div>
-          <h2 id="trophyTitle">오늘의 작은 행동이 아직 기록되지 않았습니다.</h2>
-          <p id="trophySubtitle" class="trophy-subtitle">
-            첫 기록 하나가 생기면 이곳에 오늘의 회복 트로피가 만들어집니다.
-          </p>
-          <div class="trophy-stamp" id="trophyStamp">TROPHY</div>
-        </div>
-
+      <section id="trophyTab" class="tab-panel hidden">
         <div class="card">
-          <h2 id="trophySummaryTitle">선택한 날짜의 회복 요약</h2>
-          <div class="trophy-grid">
-            <div class="trophy-metric">
-              <div class="trophy-num" id="trophySessionCount">0</div>
-              <div class="trophy-label">삶의 방향으로 돌아온 횟수</div>
-            </div>
-            <div class="trophy-metric">
-              <div class="trophy-num" id="trophyTotalTime">0초</div>
-              <div class="trophy-label">사라지지 않고 남은 시간</div>
-            </div>
-            <div class="trophy-metric">
-              <div class="trophy-num" id="trophyValueCount">0</div>
-              <div class="trophy-label">행동으로 접촉한 가치</div>
-            </div>
-          </div>
-
-          <div class="trophy-detail" id="trophyDetail">
-            오늘의 기록이 아직 없습니다.
-          </div>
+          <h2>오늘의 회복 트로피</h2>
+          <div id="trophySummary"></div>
         </div>
-
-
         <div class="card">
-          <h2 id="trophyCenterTitle">선택한 날짜의 중심 행동</h2>
-          <div class="summary-two-col">
-            <div class="summary-highlight">
-              <div class="summary-kicker">가장 오래 남은 행동</div>
-              <div class="summary-title" id="longestActionTitle">아직 기록이 없습니다.</div>
-              <div class="summary-desc" id="longestActionDesc">기록이 생기면 오늘 가장 오래 머문 행동이 표시됩니다.</div>
-            </div>
-            <div class="summary-highlight">
-              <div class="summary-kicker">가장 작은 회복 행동</div>
-              <div class="summary-title" id="smallestActionTitle">아직 기록이 없습니다.</div>
-              <div class="summary-desc" id="smallestActionDesc">짧은 행동도 정확히 그만큼 존중받습니다.</div>
-            </div>
-          </div>
+          <h2>오늘의 보상 요약</h2>
+          <div id="rewardSummary"></div>
         </div>
-
         <div class="card">
-          <h2 id="timeBucketTitle">선택한 날짜의 시간대 요약</h2>
-          <div class="time-bucket-grid" id="timeBucketGrid"></div>
-          <div class="hint">시간대 요약은 평가가 아니라 패턴 관찰입니다. 비어 있는 시간대는 실패가 아니라 여백입니다.</div>
+          <h2>오늘의 중심 행동</h2>
+          <div id="centerAction"></div>
         </div>
-
         <div class="card">
-          <h2 id="valueMapTitle">선택한 날짜에 행동으로 살아난 가치</h2>
-          <div id="trophyValueMap" class="value-map"></div>
-          <div class="hint">
-            가치는 머릿속 개념으로만 남지 않고, 오늘의 작은 행동을 통해 조금씩 몸으로 내려옵니다.
-          </div>
+          <h2>오늘 행동으로 살아난 가치</h2>
+          <div id="valueSummary"></div>
         </div>
       </section>
 
-
-      <section id="calendarTab" class="hidden">
-        <div class="card month-nav-card">
-          <div class="month-nav-top">
-            <button class="btn secondary month-prev" type="button">〈 이전 달</button>
-            <div class="month-center">
-              <div class="date-kicker">월간 회복 달력</div>
-              <div class="selected-month-title" id="selectedMonthTitle">-</div>
-            </div>
-            <button class="btn secondary month-next" type="button">다음 달 〉</button>
+      <section id="calendarTab" class="tab-panel hidden">
+        <div class="card">
+          <div class="month-header">
+            <button class="btn secondary small-btn" id="prevMonthBtn" type="button">이전</button>
+            <h2 id="monthTitle">월간 캘린더</h2>
+            <button class="btn secondary small-btn" id="nextMonthBtn" type="button">다음</button>
           </div>
-          <div class="row month-actions">
-            <button class="btn secondary month-today" type="button">이번 달로 이동</button>
-            <button class="btn secondary" id="goSelectedDateBtn" type="button">선택한 날짜 보기</button>
-          </div>
-          <div class="hint">
-            날짜를 누르면 그날의 회복 대시보드로 이동합니다. 빈 날짜는 실패가 아니라 여백입니다.
-          </div>
+          <div id="monthCalendar" class="calendar"></div>
         </div>
-<div class="card calendar-card">
-          <h2 id="simpleCalendarTitle">월간 캘린더</h2>
-          <div class="calendar-weekdays">
-            <div>일</div><div>월</div><div>화</div><div>수</div><div>목</div><div>금</div><div>토</div>
-          </div>
-          <div class="month-calendar-grid" id="monthCalendarGrid"></div>
-          <div class="hint">
-            점과 숫자는 그날 남은 회복 기록 개수를 뜻합니다. 날짜를 누르면 자세한 기록으로 이동합니다.
-          </div>
+        <div class="card">
+          <h2 id="selectedDateTitle">선택한 날짜</h2>
+          <div id="selectedDateRecords"></div>
         </div>
       </section>
 
-      <section id="recordsTab" class="hidden">
+      <section id="recordsTab" class="tab-panel hidden">
         <div class="card">
           <h2>누적 기록</h2>
+          <p class="small">저장된 기록은 잠듦/놓침 표시와 종료 시간 수정이 가능합니다.</p>
           <div id="recordsList"></div>
         </div>
       </section>
 
-      <section id="settingsTab" class="hidden">
-
-
+      <section id="settingsTab" class="tab-panel hidden">
         <div class="card">
-          <h2>내 감정 사전</h2>
-          <div class="hint">직접 추가한 감정은 여기에 쌓이고, 다음 기록부터 기본 선택지처럼 다시 사용할 수 있습니다. 삭제하려면 칩을 누르세요.</div>
-          <div class="dictionary-manager">
-            <input id="manageEmotionInput" type="text" placeholder="감정 추가/수정: 예) 괜찮음, 답답함, 집중이 흐림" />
-            <div class="row dictionary-actions">
-              <button class="btn secondary" id="saveEmotionDictBtn" type="button">감정 저장</button>
-              <button class="btn danger" id="deleteEmotionDictBtn" type="button">선택 삭제</button>
-            </div>
-            <div class="hint">칩을 누르면 입력칸에 불러와 수정할 수 있습니다.</div>
-          </div>
-          <div class="chips dictionary-chips" id="emotionDictionaryChips"></div>
-        </div>
-
-        <div class="card">
-          <h2>내 가치 사전</h2>
-          <div class="hint">직접 추가한 가치는 여기에 쌓이고, 트로피 탭의 가치 지도에도 반영됩니다. 삭제하려면 칩을 누르세요.</div>
-          <div class="dictionary-manager">
-            <input id="manageValueInput" type="text" placeholder="가치 추가/수정: 예) 공부, 몸 돌봄, 회복, 연결" />
-            <div class="row dictionary-actions">
-              <button class="btn secondary" id="saveValueDictBtn" type="button">가치 저장</button>
-              <button class="btn danger" id="deleteValueDictBtn" type="button">선택 삭제</button>
-            </div>
-            <div class="hint">칩을 누르면 입력칸에 불러와 수정할 수 있습니다.</div>
-          </div>
-          <div class="chips dictionary-chips" id="valueDictionaryChips"></div>
-        </div>
-
-
-        <div class="card">
-          <h2>내 멈춤/끝냄 이유 사전</h2>
-          <div class="hint">
-            내가 직접 추가한 종료 이유만 이곳에 쌓입니다. 이 사전은 내가 어떤 순간에 멈추는지 관찰하는 데 도움이 됩니다.
-          </div>
-          <div class="dictionary-manager">
-            <input id="manageReasonInput" type="text" placeholder="이유 추가/수정: 예) 충분히 함, 집중 끊김, 피로, 다시 시작" />
-            <div class="row dictionary-actions">
-              <button class="btn secondary" id="saveReasonDictBtn" type="button">이유 저장</button>
-              <button class="btn danger" id="deleteReasonDictBtn" type="button">선택 삭제</button>
-            </div>
-            <div class="hint">칩을 누르면 입력칸에 불러와 수정할 수 있습니다.</div>
-          </div>
-          <div class="chips dictionary-chips" id="reasonDictionaryChips"></div>
-        </div>
-
-        <div class="card">
-          <h2>내 행동 후 감각 사전</h2>
-          <div class="hint">
-            내가 직접 추가한 행동 후 감각만 이곳에 쌓입니다. 이 사전은 어떤 행동이 내 몸과 마음에 어떤 흔적을 남기는지 보여줍니다.
-          </div>
-          <div class="dictionary-manager">
-            <input id="manageSensationInput" type="text" placeholder="감각 추가/수정: 예) 조금 정돈됨, 별 느낌 없음, 약간 안심됨" />
-            <div class="row dictionary-actions">
-              <button class="btn secondary" id="saveSensationDictBtn" type="button">감각 저장</button>
-              <button class="btn danger" id="deleteSensationDictBtn" type="button">선택 삭제</button>
-            </div>
-            <div class="hint">칩을 누르면 입력칸에 불러와 수정할 수 있습니다.</div>
-          </div>
-          <div class="chips dictionary-chips" id="sensationDictionaryChips"></div>
-        </div>
-
-        <div class="card">
-          <h2>내 빠른 시작 프리셋</h2>
-          <div class="dictionary-manager">
-            <input id="managePresetInput" type="text" placeholder="프리셋 추가/수정: 예) 물 마시기, 식사, 책 보기, 걷기" />
-            <div class="row dictionary-actions">
-              <button class="btn secondary" id="savePresetBtn" type="button" onclick="return savePresetItem(event)">프리셋 저장</button>
-              <button class="btn danger" id="deletePresetBtn" type="button" onclick="return deleteSelectedPresetItem(event)">선택 삭제</button>
-            </div>
-            <div class="hint">자주 하는 작은 행동을 저장해두면 시작 탭에서 빠르게 선택할 수 있습니다.</div>
-          </div>
-          <div class="chips dictionary-chips" id="presetDictionaryChips"></div>
-        </div>
-
-        <div class="card">
-          <h2>PWA 설치 상태</h2>
-          <p class="small"><strong>현재 버전: v28.1-no-overlay-syntax-fix</strong></p>
-          <p class="small" id="pwaStatus">설치 상태를 확인 중입니다.</p>
-          <div class="row">
-            <button class="btn" id="installBtn" disabled>앱 설치하기</button>
-          </div>
-          <p class="small">
-            Android Chrome에서 HTTPS 주소로 접속하면 설치 버튼이 활성화될 수 있습니다.
-            iOS에서는 공유 버튼 → 홈 화면에 추가를 사용합니다.
-          </p>
-        </div>
-
-        <div class="card">
-          <h2>백업과 복원</h2>
-          <p class="small">
-            이 앱은 데이터를 이 기기 브라우저의 localStorage에 저장합니다.
-            앱/브라우저 설정이나 캐시 정리에 따라 데이터가 사라질 수 있으니,
-            가끔 JSON으로 백업하고, 분석용으로는 CSV도 내보낼 수 있습니다.
-          </p>
-          <p class="small" id="lastBackupAt">최근 백업 없음</p>
-
-          <div class="row">
-            <button class="btn" id="exportBtn">JSON 백업 내보내기</button>
+          <h2>백업 / 내보내기</h2>
+          <div class="grid-actions">
+            <button class="btn" id="exportJsonBtn" type="button">JSON 백업 내보내기</button>
             <button class="btn secondary" id="exportCsvBtn" type="button">CSV 내보내기</button>
-            <button class="btn secondary" id="importBtn">JSON 불러오기</button>
-            <input id="importFile" class="hidden" type="file" accept="application/json,.json" />
+            <label class="btn secondary file-label">
+              JSON 가져오기
+              <input id="importJsonInput" type="file" accept=".json,application/json" hidden />
+            </label>
           </div>
-
-          <div class="divider"></div>
-
-          <details>
-            <summary>전체 기록 삭제</summary>
-            <p class="small">정말 필요한 경우에만 사용하세요. 삭제 전 JSON 백업을 권합니다.</p>
-            <button class="btn danger" id="clearBtn">전체 기록 삭제하기</button>
-          </details>
+          <p class="small" id="backupStatus">로컬 기기에 저장됩니다. 가끔 JSON으로 백업해주세요.</p>
         </div>
 
         <div class="card">
-          <h2>사용 원칙</h2>
-          <p class="small">
-            이 앱의 목표는 완벽한 성취가 아니라 복귀입니다.
-            30초도 기록합니다. 지루해서 멈춰도 기록합니다.
-            다시 시작한 횟수는 실패의 흔적이 아니라 삶으로 돌아온 흔적입니다.
-          </p>
+          <h2>개인 옵션 관리</h2>
+          <div class="option-grid">
+            <div>
+              <h3>지금 감정</h3>
+              <div id="manageEmotions"></div>
+              <div class="inline-input">
+                <input id="newEmotionInput" type="text" placeholder="감정 추가" />
+                <button class="btn secondary" id="addEmotionBtn" type="button">추가</button>
+              </div>
+            </div>
+            <div>
+              <h3>연결된 가치</h3>
+              <div id="manageValues"></div>
+              <div class="inline-input">
+                <input id="newValueInput" type="text" placeholder="가치 추가" />
+                <button class="btn secondary" id="addValueBtn" type="button">추가</button>
+              </div>
+            </div>
+            <div>
+              <h3>멈춤/끝낸 이유</h3>
+              <div id="manageReasons"></div>
+              <div class="inline-input">
+                <input id="newReasonInput" type="text" placeholder="이유 추가" />
+                <button class="btn secondary" id="addReasonBtn" type="button">추가</button>
+              </div>
+            </div>
+            <div>
+              <h3>행동 후 감각</h3>
+              <div id="manageSensations"></div>
+              <div class="inline-input">
+                <input id="newSensationInput" type="text" placeholder="감각 추가" />
+                <button class="btn secondary" id="addSensationBtn" type="button">추가</button>
+              </div>
+            </div>
+            <div>
+              <h3>빠른 시작 프리셋</h3>
+              <div id="managePresets"></div>
+              <div class="inline-input">
+                <input id="newPresetActionInput" type="text" placeholder="행동명" />
+                <input id="newPresetValueInput" type="text" placeholder="가치" />
+                <button class="btn secondary" id="addPresetBtn" type="button">추가</button>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
     </main>
+
+    <div id="toast" class="toast hidden"></div>
   </div>
 
-  <div id="toast" class="toast">알림</div>
   <script src="app.js"></script>
-
-
-  </body>
+</body>
 </html>
