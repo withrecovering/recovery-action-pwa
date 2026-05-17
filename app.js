@@ -1085,13 +1085,6 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       showToast("기록이 시작되었습니다");
       return false;
     }
-
-
-    async
-
-    async
-
-
     function showIdleView() {
       $("idleView").classList.remove("hidden");
       $("activeView").classList.add("hidden");

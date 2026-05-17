@@ -1,7 +1,7 @@
 {
   "name": "작은 행동 회복 기록",
   "short_name": "회복기록",
-  "description": "집중 오버레이와 Wake Lock을 제거하고 탭 이동 안정성을 우선한 로컬 회복 기록 PWA",
+  "description": "오버레이 제거 후 남은 문법 오류를 정리하고 탭 이동을 복구한 로컬 회복 기록 PWA",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
