@@ -1,4 +1,3 @@
-/* build: v22-focus-overlay-optimized; no feature changes */
 :root {
       --bg: #f7f4ee;
       --card: #ffffff;
@@ -1263,29 +1262,6 @@
       cursor: not-allowed;
     }
 
-    .focus-lock-banner {
-      display: none;
-      background: #eef8f5;
-      border: 1px solid rgba(31,95,91,0.22);
-      color: var(--accent);
-      border-radius: 16px;
-      padding: 12px 14px;
-      margin: 8px 0 14px;
-      font-weight: 900;
-      line-height: 1.45;
-    }
-
-    .focus-lock-banner.show {
-      display: block;
-    }
-
-    .focus-lock-note {
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 700;
-      margin-top: 4px;
-    }
-
 
     .quick-start-field {
       margin-top: 10px;
@@ -1309,14 +1285,6 @@
       font-size: 13px;
       font-weight: 800;
       line-height: 1.45;
-    }
-
-
-    .focus-unlock-btn {
-      margin-top: 10px;
-      padding: 9px 12px;
-      font-size: 13px;
-      border-radius: 12px;
     }
 
 
@@ -1366,101 +1334,6 @@
     }
 
 
-    .focus-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 9000;
-      min-height: 100dvh;
-      padding: max(18px, env(safe-area-inset-top)) 16px max(18px, env(safe-area-inset-bottom));
-      background:
-        radial-gradient(circle at top left, rgba(31,95,91,0.18), transparent 34%),
-        linear-gradient(180deg, rgba(247,250,248,0.98), rgba(238,248,245,0.98));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      overflow: auto;
-    }
-
-    .focus-overlay.hidden {
-      display: none;
-    }
-
-    .focus-overlay-card {
-      width: min(560px, 100%);
-      background: rgba(255,255,255,0.96);
-      border: 1px solid rgba(31,95,91,0.18);
-      border-radius: 28px;
-      box-shadow: 0 24px 80px rgba(15, 23, 42, 0.18);
-      padding: 24px;
-      text-align: center;
-    }
-
-    .focus-overlay-kicker {
-      color: var(--accent);
-      font-size: 13px;
-      font-weight: 900;
-      letter-spacing: 0.04em;
-      margin-bottom: 8px;
-    }
-
-    .focus-overlay-card h2 {
-      margin: 0;
-      font-size: 24px;
-      line-height: 1.3;
-      word-break: keep-all;
-    }
-
-    .focus-overlay-timer {
-      font-variant-numeric: tabular-nums;
-      font-size: clamp(42px, 14vw, 76px);
-      font-weight: 950;
-      color: var(--accent);
-      letter-spacing: -0.04em;
-      margin: 18px 0 8px;
-    }
-
-    .focus-overlay-meta {
-      color: var(--muted);
-      font-size: 14px;
-      font-weight: 750;
-      line-height: 1.6;
-      margin: 0 0 18px;
-    }
-
-    .focus-overlay-actions {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-      margin-top: 10px;
-    }
-
-    .focus-overlay-actions .btn {
-      min-height: 48px;
-    }
-
-    .focus-overlay-note {
-      color: var(--muted);
-      font-size: 12px;
-      line-height: 1.55;
-      margin: 16px 0 0;
-    }
-
-    body.focus-overlay-open {
-      overflow: hidden;
-    }
-
-    @media (max-width: 420px) {
-      .focus-overlay-card {
-        padding: 20px;
-        border-radius: 24px;
-      }
-
-      .focus-overlay-actions {
-        grid-template-columns: 1fr;
-      }
-    }
-
-
     .long-record-badge {
       border-color: rgba(202, 138, 4, 0.28);
       background: #fff7ed;
@@ -1502,12 +1375,9 @@
     }
 
 
-    /* focus-overlay-tab-safe-v27-2
        The focus overlay stays below the sticky tabs so tab navigation remains available.
     */
-    .focus-overlay {
-      padding-top: calc(86px + max(18px, env(safe-area-inset-top)));
-    }
+
 
     .tabs {
       pointer-events: auto;

@@ -1,4 +1,4 @@
-const CACHE_NAME = "minwoo-recovery-pwa-v27-2-overlay-tab-click-fix";
+const CACHE_NAME = "minwoo-recovery-pwa-v28-no-overlay";
 const APP_SHELL = [
   "./",
   "./index.html",

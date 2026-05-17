@@ -1,4 +1,3 @@
-// build: v22-focus-overlay-optimized; no feature changes; syntax verified
 const STORAGE_KEY = "minwoo_recovery_records_v2";
     const OLD_STORAGE_KEY = "minwoo_recovery_records_v1";
     const ACTIVE_KEY = "minwoo_recovery_active_v2";
@@ -40,8 +39,6 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
     let pendingEnd = null;
     let timerInterval = null;
     let deferredInstallPrompt = null;
-    let wakeLockSentinel = null;
-    let focusOverlayEnabled = true;
     let timelineScale = Number(localStorage.getItem("minwoo_timeline_scale_v1")) || 10;
     let selectedDateKey = localStorage.getItem("recovery_selected_date_v1") || getTodayKey();
     let selectedMonthKey = localStorage.getItem("recovery_selected_month_v1") || getTodayKey().slice(0, 7);
@@ -1048,7 +1045,6 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
         switchTab("start");
         showActiveView();
         updateFocusLockUi();
-      ensureTabsUnlocked();
         return false;
       }
 
@@ -1083,80 +1079,17 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       };
 
       saveActive(activeSession);
-      focusOverlayEnabled = true;
       showActiveView();
       switchTab("start");
       updateFocusLockUi();
-      updateFocusOverlay();
-      requestWakeLock();
       showToast("기록이 시작되었습니다");
       return false;
     }
 
 
-    async function requestWakeLock() {
-      if (!("wakeLock" in navigator)) return;
-      try {
-        wakeLockSentinel = await navigator.wakeLock.request("screen");
-        wakeLockSentinel.addEventListener("release", () => {
-          wakeLockSentinel = null;
-        });
-      } catch {
-        wakeLockSentinel = null;
-      }
-    }
+    async
 
-    async function releaseWakeLock() {
-      if (!wakeLockSentinel) return;
-      try {
-        await wakeLockSentinel.release();
-      } catch {
-        // ignore
-      } finally {
-        wakeLockSentinel = null;
-      }
-    }
-
-    function shouldShowFocusOverlay() {
-      const startTabVisible = $("startTab") && !$("startTab").classList.contains("hidden");
-      return focusOverlayEnabled && startTabVisible && Boolean(activeSession && isValidActiveSession(activeSession) && !pendingEnd);
-    }
-
-    function updateFocusOverlay() {
-      const overlay = $("focusOverlay");
-      if (!overlay) return;
-
-      const show = shouldShowFocusOverlay();
-      overlay.classList.toggle("hidden", !show);
-      document.body.classList.toggle("focus-overlay-open", show);
-
-      if (!show) return;
-
-      const elapsed = Math.floor((Date.now() - Number(activeSession.startMs || Date.now())) / 1000);
-      const values = Array.isArray(activeSession.values) ? activeSession.values.join(", ") : "";
-      const emotions = Array.isArray(activeSession.emotionsBefore) ? activeSession.emotionsBefore.join(", ") : "";
-
-      $("focusOverlayAction").textContent = activeSession.actionText || "진행 중인 행동";
-      $("focusOverlayTimer").textContent = formatDuration(elapsed);
-      $("focusOverlayMeta").innerHTML = `
-        시작: ${formatDateTime(activeSession.startAt)}<br />
-        상태: ${escapeHtml(activeSession.stateBefore || "기록 중")}
-        ${emotions ? ` · 감정: ${escapeHtml(emotions)}` : ""}
-        ${values ? ` · 가치: ${escapeHtml(values)}` : ""}
-      `;
-    }
-
-    function hideFocusOverlayTemporarily() {
-      focusOverlayEnabled = false;
-      updateFocusOverlay();
-      switchTab("settings");
-      showToast("백업 탭을 열었습니다");
-    }
-
-    function restoreFocusOverlay() {
-      focusOverlayEnabled = true;
-      updateFocusOverlay();
-    }
+    async
 
 
     function showIdleView() {
@@ -1181,14 +1114,12 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       updateTimer();
       if (timerInterval) clearInterval(timerInterval);
       timerInterval = setInterval(updateTimer, 1000);
-      updateFocusOverlay();
     }
 
     function updateTimer() {
       if (!activeSession) return;
       const elapsed = Math.floor((Date.now() - Number(activeSession.startMs || Date.now())) / 1000);
       if ($("timer")) $("timer").textContent = formatDuration(elapsed);
-      updateFocusOverlay();
     }
 
     function endSession(type) {
@@ -1221,10 +1152,6 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       $("idleView").classList.add("hidden");
       $("activeView").classList.add("hidden");
       $("endView").classList.remove("hidden");
-
-      focusOverlayEnabled = false;
-      updateFocusOverlay();
-      releaseWakeLock();
 
       if (timerInterval) clearInterval(timerInterval);
     }
@@ -1259,13 +1186,10 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       clearActive();
 
       resetStartFormSoft();
-      focusOverlayEnabled = true;
       showIdleView();
       updateDateControls();
       renderAll();
       updateFocusLockUi();
-      updateFocusOverlay();
-      releaseWakeLock();
 
       if (afterSave === "start") {
         showToast("저장했습니다. 다음 행동을 준비해볼 수 있습니다");
@@ -1298,11 +1222,8 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       pendingEnd = null;
       selectedReason = "";
       selectedSensation = "";
-      focusOverlayEnabled = true;
       showActiveView();
       updateFocusLockUi();
-      updateFocusOverlay();
-      requestWakeLock();
     }
 
     function getTodayRecords() {
@@ -1826,7 +1747,6 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
     }
 
 
-
     function markRecordAsMissedEnd(id) {
       const records = loadRecords();
       const record = records.find((item) => item.id === id);
@@ -1848,7 +1768,6 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       renderAll();
       showToast("잠듦/놓침으로 표시했습니다");
     }
-
 
 
     function padTimePart(n) {
@@ -2018,12 +1937,10 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
     }
 
     function updateFocusLockUi() {
-      const banner = $("focusLockBanner");
-      if (banner) banner.classList.remove("show");
-
       document.querySelectorAll(".tab").forEach((tab) => {
         tab.classList.remove("locked");
         tab.setAttribute("aria-disabled", "false");
+        tab.disabled = false;
       });
     }
 
@@ -2032,6 +1949,7 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
         b.classList.toggle("active", b.dataset.tab === tab);
         b.classList.remove("locked");
         b.setAttribute("aria-disabled", "false");
+        b.disabled = false;
       });
 
       $("startTab").classList.toggle("hidden", tab !== "start");
@@ -2040,14 +1958,6 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       $("calendarTab").classList.toggle("hidden", tab !== "calendar");
       $("recordsTab").classList.toggle("hidden", tab !== "records");
       $("settingsTab").classList.toggle("hidden", tab !== "settings");
-
-      // 탭 이동은 항상 허용합니다.
-      // 기록 중 start 탭으로 돌아온 경우에만 집중 오버레이를 다시 보여줍니다.
-      if (tab === "start" && activeSession && !pendingEnd) {
-        restoreFocusOverlay();
-      } else {
-        updateFocusOverlay();
-      }
 
       updateFocusLockUi();
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -2070,12 +1980,8 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
         clearInterval(timerInterval);
         timerInterval = null;
       }
-
-      focusOverlayEnabled = true;
       showIdleView();
       updateFocusLockUi();
-      updateFocusOverlay();
-      releaseWakeLock();
       switchTab("start");
       showToast("기록 잠금을 해제했습니다");
       return false;
@@ -2251,15 +2157,6 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
     }
 
 
-    function ensureTabsUnlocked() {
-      document.querySelectorAll(".tab").forEach((tab) => {
-        tab.classList.remove("locked");
-        tab.setAttribute("aria-disabled", "false");
-        tab.disabled = false;
-      });
-    }
-
-
     function setupTabFallbackListeners() {
       document.addEventListener("click", (event) => {
         const tab = event.target && event.target.closest ? event.target.closest(".tab") : null;
@@ -2398,10 +2295,6 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       $("pauseBtn").addEventListener("click", () => endSession("여기까지"));
       $("completeBtn").addEventListener("click", () => endSession("완료"));
       $("missedEndBtn").addEventListener("click", () => endSession("잠듦/놓침"));
-      $("focusPauseBtn").addEventListener("click", () => endSession("여기까지"));
-      $("focusCompleteBtn").addEventListener("click", () => endSession("완료"));
-      $("focusBackupBtn").addEventListener("click", hideFocusOverlayTemporarily);
-      $("focusUnlockBtn").addEventListener("click", forceUnlockFocusLock);
       $("saveRecordBtn").addEventListener("click", () => savePendingRecord("today"));
       $("saveAndPrepareNextBtn").addEventListener("click", () => savePendingRecord("start"));
       $("cancelEndBtn").addEventListener("click", cancelEnd);
@@ -2443,15 +2336,12 @@ activeSession = loadActive();
       }
 
       if (activeSession) {
-        focusOverlayEnabled = true;
         showActiveView();
         switchTab("start");
-        requestWakeLock();
       } else {
         showIdleView();
       }
       updateFocusLockUi();
-      updateFocusOverlay();
 
       renderCustomEmotionChips();
       renderCustomValueChips();
@@ -2471,14 +2361,6 @@ activeSession = loadActive();
 
     window.savePresetItem = savePresetItem;
     window.deleteSelectedPresetItem = deleteSelectedPresetItem;
-
-
-    document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "visible" && shouldShowFocusOverlay()) {
-        requestWakeLock();
-        updateFocusOverlay();
-      }
-    });
 
     window.addEventListener("beforeunload", (event) => {
       if (!isFocusLocked()) return;
