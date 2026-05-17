@@ -1,7 +1,7 @@
 {
   "name": "작은 행동 회복 기록",
   "short_name": "회복기록",
-  "description": "종료 방식에 잠듦/놓침을 추가해 종료 누락을 부드럽게 기록할 수 있는 로컬 회복 기록 PWA",
+  "description": "기록 저장 후 바로 다음 행동을 준비할 수 있게 돕는 로컬 회복 기록 PWA",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

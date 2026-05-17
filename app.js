@@ -1227,7 +1227,7 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       if (timerInterval) clearInterval(timerInterval);
     }
 
-    function savePendingRecord() {
+    function savePendingRecord(afterSave = "today") {
       if (!pendingEnd) return;
 
       const startMinute = minutesSinceMidnight(pendingEnd.startAt);
@@ -1264,8 +1264,14 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       updateFocusLockUi();
       updateFocusOverlay();
       releaseWakeLock();
-      showToast("회복 기록이 저장되었습니다");
-      switchTab("today");
+
+      if (afterSave === "start") {
+        showToast("저장했습니다. 다음 행동을 준비해볼 수 있습니다");
+        switchTab("start");
+      } else {
+        showToast("회복 기록이 저장되었습니다");
+        switchTab("today");
+      }
     }
 
     function resetStartFormSoft() {
@@ -1818,6 +1824,111 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
     }
 
 
+
+    function markRecordAsMissedEnd(id) {
+      const records = loadRecords();
+      const record = records.find((item) => item.id === id);
+      if (!record) {
+        showToast("표시할 기록을 찾지 못했습니다");
+        return;
+      }
+
+      if (record.endType === "잠듦/놓침") {
+        showToast("이미 잠듦/놓침으로 표시된 기록입니다");
+        return;
+      }
+
+      const ok = confirm("이 기록을 ‘잠듦/놓침’으로 표시할까요?");
+      if (!ok) return;
+
+      record.endType = "잠듦/놓침";
+      saveRecords(records);
+      renderAll();
+      showToast("잠듦/놓침으로 표시했습니다");
+    }
+
+
+
+    function padTimePart(n) {
+      return String(n).padStart(2, "0");
+    }
+
+    function formatRecordEndTimeForPrompt(iso) {
+      const d = new Date(iso);
+      if (Number.isNaN(d.getTime())) return "";
+      return `${padTimePart(d.getHours())}:${padTimePart(d.getMinutes())}`;
+    }
+
+    function parseEndTimeForRecord(input, startIso) {
+      const text = String(input || "").trim();
+      if (!text) return null;
+
+      const start = new Date(startIso);
+      if (Number.isNaN(start.getTime())) return null;
+
+      const timeOnly = text.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+      if (timeOnly) {
+        const h = Number(timeOnly[1]);
+        const m = Number(timeOnly[2]);
+        const s = Number(timeOnly[3] || 0);
+        if (h < 0 || h > 23 || m < 0 || m > 59 || s < 0 || s > 59) return null;
+
+        const d = new Date(start);
+        d.setHours(h, m, s, 0);
+        return d;
+      }
+
+      const normalized = text.replace(" ", "T");
+      const parsed = new Date(normalized);
+      if (Number.isNaN(parsed.getTime())) return null;
+      return parsed;
+    }
+
+    function updateRecordEndTime(id) {
+      const records = loadRecords();
+      const record = records.find((item) => item.id === id);
+      if (!record) {
+        showToast("수정할 기록을 찾지 못했습니다");
+        return;
+      }
+
+      const current = formatRecordEndTimeForPrompt(record.endAt || record.startAt);
+      const input = prompt(
+        "새 종료 시간을 입력해주세요.\n예: 14:30 또는 2026-05-17 14:30",
+        current
+      );
+
+      if (input === null) return;
+
+      const newEnd = parseEndTimeForRecord(input, record.startAt);
+      if (!newEnd) {
+        showToast("시간 형식을 확인해주세요");
+        return;
+      }
+
+      const start = new Date(record.startAt);
+      if (Number.isNaN(start.getTime())) {
+        showToast("시작 시간이 올바르지 않습니다");
+        return;
+      }
+
+      if (newEnd < start) {
+        showToast("종료 시간은 시작 시간보다 뒤여야 합니다");
+        return;
+      }
+
+      record.endAt = newEnd.toISOString();
+      record.endMs = newEnd.getTime();
+      record.durationSec = Math.max(0, Math.floor((newEnd.getTime() - start.getTime()) / 1000));
+      record.correctionType = "end_time_adjusted";
+      record.correctedAt = nowIso();
+
+      saveRecords(records);
+      renderAll();
+      showToast("종료 시간을 수정했습니다");
+    }
+
+
     function renderRecords() {
       const records = loadRecords();
       const list = $("recordsList");
@@ -1832,6 +1943,12 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
         const div = document.createElement("div");
         div.className = "record";
         const stateClass = stateBadgeClass(record.stateBefore);
+        const missedActionButton = record.endType === "잠듦/놓침"
+          ? ""
+          : `<button class="btn secondary mark-missed-end">잠듦/놓침 표시</button>`;
+        const endTimeAdjustedBadge = record.correctionType === "end_time_adjusted"
+          ? `<span class="badge end-time-adjusted">종료 시간 정정됨</span>`
+          : "";
         div.innerHTML = `
           <div class="record-title">${escapeHtml(record.actionText)}</div>
           <div>
@@ -1839,6 +1956,7 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
             <span class="badge ${record.endType === "잠듦/놓침" ? "end-type-missed" : ""}">${record.endType}</span>
             <span class="badge">${formatDurationShort(record.durationSec)}</span>
             ${getLongRecordBadge(record)}
+            ${endTimeAdjustedBadge}
           </div>
           <div class="meta">
             시작: ${formatDateTime(record.startAt)}<br/>
@@ -1848,9 +1966,20 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
             이유: ${escapeHtml(record.stopReason || "기록 없음")} · 감각: ${escapeHtml(record.sensationAfter || "기록 없음")}
           </div>
 <div class="row">
-<button class="btn danger delete-record">삭제</button>
+<button class="btn secondary edit-end-time-safe">종료 시간 수정</button>
+          ${missedActionButton}
+          <button class="btn danger delete-record">삭제</button>
           </div>
         `;
+        const editEndTimeBtn = div.querySelector(".edit-end-time-safe");
+        if (editEndTimeBtn) {
+          editEndTimeBtn.addEventListener("click", () => updateRecordEndTime(record.id));
+        }
+
+        const markMissedBtn = div.querySelector(".mark-missed-end");
+        if (markMissedBtn) {
+          markMissedBtn.addEventListener("click", () => markRecordAsMissedEnd(record.id));
+        }
         div.querySelector(".delete-record").addEventListener("click", () => deleteRecord(record.id));
         list.appendChild(div);
       });
@@ -2269,7 +2398,8 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       $("focusCompleteBtn").addEventListener("click", () => endSession("완료"));
       $("focusBackupBtn").addEventListener("click", hideFocusOverlayTemporarily);
       $("focusUnlockBtn").addEventListener("click", forceUnlockFocusLock);
-      $("saveRecordBtn").addEventListener("click", savePendingRecord);
+      $("saveRecordBtn").addEventListener("click", () => savePendingRecord("today"));
+      $("saveAndPrepareNextBtn").addEventListener("click", () => savePendingRecord("start"));
       $("cancelEndBtn").addEventListener("click", cancelEnd);
 
       $("exportBtn").addEventListener("click", exportJson);

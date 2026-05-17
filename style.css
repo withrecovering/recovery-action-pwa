@@ -1479,3 +1479,24 @@
       background: #eef2ff;
       color: #4338ca;
     }
+
+
+    .mark-missed-end {
+      margin-right: 8px;
+    }
+
+
+    .edit-end-time-safe {
+      margin-right: 8px;
+    }
+
+    .end-time-adjusted {
+      border-color: rgba(14, 116, 144, 0.24);
+      background: #ecfeff;
+      color: #0e7490;
+    }
+
+
+    #saveAndPrepareNextBtn {
+      white-space: normal;
+    }
