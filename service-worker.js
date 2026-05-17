@@ -1,4 +1,4 @@
-const CACHE_NAME = "minwoo-recovery-pwa-v29-clean-rebuild";
+const CACHE_NAME = "minwoo-recovery-pwa-v29-1-runtime-cache-safe";
 const ASSETS = [
   "./",
   "index.html",

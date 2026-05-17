@@ -7,6 +7,10 @@
   const ACTIVE_KEY = "recovery_v29_active";
   const OPTIONS_KEY = "recovery_v29_options";
 
+  function deepClone(value) {
+    return JSON.parse(JSON.stringify(value));
+  }
+
   const defaultOptions = {
     states: ["초록불", "노란불", "빨간불"],
     emotions: ["괜찮음", "무기력", "불안", "답답함", "공허함", "피곤함", "차분함"],
@@ -61,10 +65,10 @@
   function loadOptions() {
     try {
       const raw = localStorage.getItem(OPTIONS_KEY);
-      if (!raw) return structuredClone(defaultOptions);
-      return { ...structuredClone(defaultOptions), ...JSON.parse(raw) };
+      if (!raw) return deepClone(defaultOptions);
+      return { ...deepClone(defaultOptions), ...JSON.parse(raw) };
     } catch {
-      return structuredClone(defaultOptions);
+      return deepClone(defaultOptions);
     }
   }
 
@@ -140,12 +144,12 @@
   }
 
   function escapeHtml(value) {
-    return String(value ?? "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#039;");
   }
 
   function uid() {
@@ -173,6 +177,7 @@
   }
 
   function switchTab(tab) {
+    window.recoveryAppSwitchTab = switchTab;
     document.querySelectorAll(".tab").forEach((button) => {
       button.classList.toggle("active", button.dataset.tab === tab);
       button.disabled = false;
@@ -748,7 +753,7 @@
   function exportJson() {
     const payload = {
       exportedAt: nowIso(),
-      version: "v29-clean-rebuild",
+      version: "v29.1-runtime-cache-safe",
       records,
       options
     };
@@ -774,7 +779,7 @@
 
   function csvEscape(value) {
     const text = String(value ?? "");
-    if (/[",\n]/.test(text)) return `"${text.replaceAll('"', '""')}"`;
+    if (/[",\n]/.test(text)) return `"${text.replace(/"/g, '""')}"`;
     return text;
   }
 
@@ -797,7 +802,7 @@
         const payload = JSON.parse(String(reader.result || "{}"));
         if (Array.isArray(payload.records)) records = payload.records;
         if (payload.options && typeof payload.options === "object") {
-          options = { ...structuredClone(defaultOptions), ...payload.options };
+          options = { ...deepClone(defaultOptions), ...payload.options };
         }
         saveRecords();
         saveOptions();
@@ -865,10 +870,51 @@
     if (activeSession) showActiveView();
     else showIdleView();
 
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("service-worker.js").catch(() => {});
+    // Stability-first build: remove previous PWA service workers/caches so stale code does not block tab behavior.
+    try {
+      if ("serviceWorker" in navigator) {
+        navigator.serviceWorker.getRegistrations()
+          .then((registrations) => registrations.forEach((registration) => registration.unregister()))
+          .catch(() => {});
+      }
+      if ("caches" in window) {
+        caches.keys()
+          .then((keys) => Promise.all(keys
+            .filter((key) => key.includes("minwoo") || key.includes("recovery"))
+            .map((key) => caches.delete(key))))
+          .catch(() => {});
+      }
+    } catch {
+      // ignore cache cleanup failures
     }
   }
 
-  document.addEventListener("DOMContentLoaded", init);
+  function safeInit() {
+    try {
+      init();
+    } catch (error) {
+      console.error("Recovery app init failed:", error);
+      if (window.recoveryEmergencySwitchTab) {
+        window.recoveryEmergencySwitchTab("start");
+      }
+      showToastSafe("앱 초기화 오류가 있어 탭 fallback으로 전환했습니다");
+    }
+  }
+
+  function showToastSafe(message) {
+    try {
+      const toast = $("toast");
+      if (!toast) return;
+      toast.textContent = message;
+      toast.classList.remove("hidden");
+    } catch {
+      // ignore
+    }
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", safeInit);
+  } else {
+    safeInit();
+  }
 })();
