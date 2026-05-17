@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#1f5f5b" />
   <link rel="manifest" href="manifest.webmanifest" />
   <link rel="apple-touch-icon" href="icon-192.png" />
-  <link rel="stylesheet" href="style.css?v29.2-ui-polish" />
+  <link rel="stylesheet" href="style.css?v29.3-single-select-daybar-axis" />
 </head>
 <body>
   <div class="app">
@@ -17,7 +17,7 @@
         <h1>작은 행동 회복 기록</h1>
         <p class="subtitle">좋은 행동만 기록하지 않아도 됩니다. 실제로 한 행동과 기록을 부드럽게 맞추는 것이 핵심입니다.</p>
       </div>
-      <p class="version"><strong>현재 버전: v29.2-ui-polish</strong></p>
+      <p class="version"><strong>현재 버전: v29.3-single-select-daybar-axis</strong></p>
     </header>
 
     <nav class="tabs" aria-label="주요 탭">
@@ -88,11 +88,11 @@
         <div class="card">
           <h2>오늘 하루바</h2>
           <div id="dayBar" class="day-bar"></div>
+          <div id="dayBarAxis" class="day-bar-axis" aria-label="0시부터 24시까지 시간 축"></div>
           <div id="valueLegend" class="legend"></div>
         </div>
         <div class="card">
           <h2>정밀 세로 타임라인</h2>
-          <div class="timeline-mode">간단 · 표준 · 정밀 · 초정밀</div>
           <div id="todayTimeline" class="timeline"></div>
         </div>
       </section>
@@ -232,6 +232,6 @@
     })();
   </script>
 
-  <script src="app.js?v29.2-ui-polish"></script>
+  <script src="app.js?v29.3-single-select-daybar-axis"></script>
 </body>
 </html>

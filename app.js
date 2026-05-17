@@ -219,12 +219,12 @@
     });
 
     renderChips("emotionChips", options.emotions, selectedEmotions, (item) => {
-      selectedEmotions = toggleItem(selectedEmotions, item);
+      selectedEmotions = selectSingleArrayItem(selectedEmotions, item);
       renderStartControls();
     }, true);
 
     renderChips("valueChips", options.values, selectedValues, (item) => {
-      selectedValues = toggleItem(selectedValues, item);
+      selectedValues = selectSingleArrayItem(selectedValues, item);
       renderStartControls();
     }, true);
 
@@ -237,7 +237,7 @@
       button.textContent = `${preset.action} · ${(preset.values || []).join(", ")}`;
       button.addEventListener("click", () => {
         $("actionText").value = preset.action;
-        selectedValues = Array.isArray(preset.values) ? [...preset.values] : [];
+        selectedValues = Array.isArray(preset.values) ? preset.values.slice(0, 1) : [];
         renderStartControls();
       });
       presets.appendChild(button);
@@ -246,6 +246,10 @@
 
   function toggleItem(list, item) {
     return list.includes(item) ? list.filter((x) => x !== item) : [...list, item];
+  }
+
+  function selectSingleArrayItem(list, item) {
+    return list.includes(item) ? [] : [item];
   }
 
   function showIdleView() {
@@ -409,8 +413,25 @@
 
   function renderDayBar(dayRecords) {
     const bar = $("dayBar");
+    const axis = $("dayBarAxis");
     bar.innerHTML = "";
+    if (axis) axis.innerHTML = "";
     const legendValues = new Set();
+
+    for (let hour = 0; hour <= 24; hour += 3) {
+      const line = document.createElement("div");
+      line.className = "day-hour-grid";
+      line.style.left = `${(hour / 24) * 100}%`;
+      bar.appendChild(line);
+
+      if (axis) {
+        const tick = document.createElement("span");
+        tick.className = "day-hour-label";
+        tick.style.left = `${(hour / 24) * 100}%`;
+        tick.textContent = String(hour);
+        axis.appendChild(tick);
+      }
+    }
 
     dayRecords.forEach((record) => {
       const start = Math.max(0, Math.min(1440, record.startMinute ?? minutesSinceMidnight(record.startAt)));

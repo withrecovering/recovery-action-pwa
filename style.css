@@ -786,3 +786,57 @@ input:focus {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* v29.3 — single-select chips + 0~24 day bar axis */
+.day-bar {
+  margin-top: 2px;
+}
+
+.day-hour-grid {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(100, 116, 139, 0.16);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.day-hour-grid:first-child,
+.day-hour-grid:last-child {
+  background: rgba(31, 95, 91, 0.22);
+}
+
+.day-segment {
+  z-index: 2;
+}
+
+.day-bar-axis {
+  position: relative;
+  height: 24px;
+  margin: 4px 2px 2px;
+  color: #7a8a90;
+  font-size: 10.5px;
+  font-weight: 850;
+  user-select: none;
+}
+
+.day-hour-label {
+  position: absolute;
+  top: 1px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+.day-hour-label:first-child {
+  transform: translateX(0);
+}
+
+.day-hour-label:last-child {
+  transform: translateX(-100%);
+}
+
+.timeline-mode {
+  display: none;
+}
