@@ -57,7 +57,7 @@
       background: rgba(247,244,238,0.88);
       backdrop-filter: blur(10px);
       padding: 8px 0;
-      z-index: 10;
+      z-index: 10050;
     }
 
     .tab {
@@ -1369,7 +1369,7 @@
     .focus-overlay {
       position: fixed;
       inset: 0;
-      z-index: 9999;
+      z-index: 9000;
       min-height: 100dvh;
       padding: max(18px, env(safe-area-inset-top)) 16px max(18px, env(safe-area-inset-bottom));
       background:
@@ -1499,4 +1499,16 @@
 
     #saveAndPrepareNextBtn {
       white-space: normal;
+    }
+
+
+    /* focus-overlay-tab-safe-v27-2
+       The focus overlay stays below the sticky tabs so tab navigation remains available.
+    */
+    .focus-overlay {
+      padding-top: calc(86px + max(18px, env(safe-area-inset-top)));
+    }
+
+    .tabs {
+      pointer-events: auto;
     }
