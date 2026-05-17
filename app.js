@@ -1048,6 +1048,7 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
         switchTab("start");
         showActiveView();
         updateFocusLockUi();
+      ensureTabsUnlocked();
         return false;
       }
 
@@ -1117,7 +1118,8 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
     }
 
     function shouldShowFocusOverlay() {
-      return focusOverlayEnabled && Boolean(activeSession && isValidActiveSession(activeSession) && !pendingEnd);
+      const startTabVisible = $("startTab") && !$("startTab").classList.contains("hidden");
+      return focusOverlayEnabled && startTabVisible && Boolean(activeSession && isValidActiveSession(activeSession) && !pendingEnd);
     }
 
     function updateFocusOverlay() {
@@ -2016,32 +2018,21 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
     }
 
     function updateFocusLockUi() {
-      if (activeSession && !isValidActiveSession(activeSession)) {
-        clearActive();
-        activeSession = null;
-      }
-
-      const locked = isFocusLocked();
       const banner = $("focusLockBanner");
-      if (banner) banner.classList.toggle("show", locked);
+      if (banner) banner.classList.remove("show");
 
       document.querySelectorAll(".tab").forEach((tab) => {
-        const shouldLock = locked && !["start", "settings"].includes(tab.dataset.tab);
-        tab.classList.toggle("locked", shouldLock);
-        tab.setAttribute("aria-disabled", shouldLock ? "true" : "false");
+        tab.classList.remove("locked");
+        tab.setAttribute("aria-disabled", "false");
       });
     }
 
     function switchTab(tab) {
-      const allowedWhileLocked = tab === "start" || tab === "settings";
-      if (isFocusLocked() && !allowedWhileLocked) {
-        showToast(getFocusLockMessage());
-        updateFocusLockUi();
-        updateFocusOverlay();
-        return;
-      }
-
-      document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
+      document.querySelectorAll(".tab").forEach((b) => {
+        b.classList.toggle("active", b.dataset.tab === tab);
+        b.classList.remove("locked");
+        b.setAttribute("aria-disabled", "false");
+      });
 
       $("startTab").classList.toggle("hidden", tab !== "start");
       $("todayTab").classList.toggle("hidden", tab !== "today");
@@ -2050,12 +2041,15 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       $("recordsTab").classList.toggle("hidden", tab !== "records");
       $("settingsTab").classList.toggle("hidden", tab !== "settings");
 
+      // 탭 이동은 항상 허용합니다.
+      // 기록 중 start 탭으로 돌아온 경우에만 집중 오버레이를 다시 보여줍니다.
       if (tab === "start" && activeSession && !pendingEnd) {
         restoreFocusOverlay();
+      } else {
+        updateFocusOverlay();
       }
 
       updateFocusLockUi();
-      updateFocusOverlay();
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 
@@ -2255,6 +2249,16 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
         startSession(event);
       });
     }
+
+
+    function ensureTabsUnlocked() {
+      document.querySelectorAll(".tab").forEach((tab) => {
+        tab.classList.remove("locked");
+        tab.setAttribute("aria-disabled", "false");
+        tab.disabled = false;
+      });
+    }
+
 
     function setupTabFallbackListeners() {
       document.addEventListener("click", (event) => {

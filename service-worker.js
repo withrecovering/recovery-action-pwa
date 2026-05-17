@@ -1,4 +1,4 @@
-const CACHE_NAME = "minwoo-recovery-pwa-v27-save-and-prepare-next";
+const CACHE_NAME = "minwoo-recovery-pwa-v27-1-tab-stability-fix";
 const APP_SHELL = [
   "./",
   "./index.html",

@@ -1,7 +1,7 @@
 {
   "name": "작은 행동 회복 기록",
   "short_name": "회복기록",
-  "description": "기록 저장 후 바로 다음 행동을 준비할 수 있게 돕는 로컬 회복 기록 PWA",
+  "description": "탭 이동 안정성을 우선해 집중 오버레이가 탭 전환을 막지 않도록 조정한 로컬 회복 기록 PWA",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
