@@ -1805,6 +1805,19 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
       }
     }
 
+
+    function getLongRecordBadge(record) {
+      const durationSec = Number(record && record.durationSec ? record.durationSec : 0);
+      if (durationSec >= 6 * 60 * 60) {
+        return `<span class="badge long-record-badge likely-missed-end">종료 놓침 가능성</span>`;
+      }
+      if (durationSec >= 2 * 60 * 60) {
+        return `<span class="badge long-record-badge check-needed">확인 필요</span>`;
+      }
+      return "";
+    }
+
+
     function renderRecords() {
       const records = loadRecords();
       const list = $("recordsList");
@@ -1825,6 +1838,7 @@ const STORAGE_KEY = "minwoo_recovery_records_v2";
             <span class="badge ${stateClass}">${record.stateBefore}</span>
             <span class="badge">${record.endType}</span>
             <span class="badge">${formatDurationShort(record.durationSec)}</span>
+            ${getLongRecordBadge(record)}
           </div>
           <div class="meta">
             시작: ${formatDateTime(record.startAt)}<br/>

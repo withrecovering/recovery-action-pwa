@@ -1459,3 +1459,16 @@
         grid-template-columns: 1fr;
       }
     }
+
+
+    .long-record-badge {
+      border-color: rgba(202, 138, 4, 0.28);
+      background: #fff7ed;
+      color: #9a3412;
+    }
+
+    .long-record-badge.likely-missed-end {
+      border-color: rgba(185, 28, 28, 0.26);
+      background: #fef2f2;
+      color: #991b1b;
+    }
