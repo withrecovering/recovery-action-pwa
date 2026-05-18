@@ -18,12 +18,12 @@
     reasons: ["충분히 함", "집중 끊김", "피로", "잠듦/놓침", "다음 행동으로 전환", "여기까지"],
     sensations: ["조금 정돈됨", "별 느낌 없음", "조금 가벼움", "더 피곤함", "약간 안정됨", "답답함"],
     presets: [
-      { action: "교재 읽기", values: ["공부"] },
-      { action: "딴짓", values: ["딴짓"] },
-      { action: "눈 감고 쉬기", values: ["휴식", "회복"] },
-      { action: "식사하기", values: ["식사", "몸 돌봄"] },
-      { action: "걷기", values: ["운동", "몸 돌봄"] },
-      { action: "정리하기", values: ["가사"] }
+      { action: "교재 읽기" },
+      { action: "딴짓" },
+      { action: "눈 감고 쉬기" },
+      { action: "식사하기" },
+      { action: "걷기" },
+      { action: "정리하기" }
     ]
   };
 
@@ -234,10 +234,10 @@
       const button = document.createElement("button");
       button.type = "button";
       button.className = "chip";
-      button.textContent = `${preset.action} · ${(preset.values || []).join(", ")}`;
+      button.textContent = preset.action;
       button.addEventListener("click", () => {
         $("actionText").value = preset.action;
-        selectedValues = Array.isArray(preset.values) ? preset.values.slice(0, 1) : [];
+        // 빠른 시작 프리셋은 행동만 채웁니다. 가치는 현재 맥락에서 따로 선택합니다.
         renderStartControls();
       });
       presets.appendChild(button);
@@ -706,6 +706,66 @@
     showToast("기록을 삭제했습니다");
   }
 
+
+  function editOptionItem(key, index) {
+    const current = options[key] && options[key][index];
+    if (!current) return;
+
+    const next = prompt("새 이름을 입력해주세요.", current);
+    if (next === null) return;
+
+    const trimmed = next.trim();
+    if (!trimmed) {
+      showToast("빈 이름으로는 수정할 수 없습니다");
+      return;
+    }
+
+    const duplicateIndex = options[key].findIndex((item, itemIndex) => item === trimmed && itemIndex !== index);
+    if (duplicateIndex >= 0) {
+      showToast("이미 있는 항목입니다");
+      return;
+    }
+
+    options[key][index] = trimmed;
+
+    if (key === "emotions") {
+      selectedEmotions = selectedEmotions.map((item) => item === current ? trimmed : item);
+    }
+
+    if (key === "values") {
+      selectedValues = selectedValues.map((item) => item === current ? trimmed : item);
+}
+
+    if (key === "reasons" && selectedReason === current) selectedReason = trimmed;
+    if (key === "sensations" && selectedSensation === current) selectedSensation = trimmed;
+
+    saveOptions();
+    renderAll();
+    showToast("항목을 수정했습니다");
+  }
+
+  function editPresetItem(index) {
+    const preset = options.presets[index];
+    if (!preset) return;
+
+    const currentAction = preset.action || "";
+    const nextAction = prompt("프리셋 행동명을 수정해주세요.", currentAction);
+    if (nextAction === null) return;
+
+    const action = nextAction.trim();
+    if (!action) {
+      showToast("행동명은 비워둘 수 없습니다");
+      return;
+    }
+
+    options.presets[index] = { action };
+
+    saveOptions();
+    renderAll();
+    showToast("프리셋을 수정했습니다");
+  }
+
+
   function renderSettings() {
     renderManageList("manageEmotions", options.emotions, "emotions");
     renderManageList("manageValues", options.values, "values");
@@ -717,15 +777,34 @@
   function renderManageList(containerId, list, key) {
     const container = $(containerId);
     container.innerHTML = "";
-    list.forEach((item) => {
+    list.forEach((item, index) => {
       const row = document.createElement("div");
       row.className = "manage-row";
-      row.innerHTML = `<span>${escapeHtml(item)}</span><button class="btn danger small-btn" type="button">삭제</button>`;
-      row.querySelector("button").addEventListener("click", () => {
-        options[key] = options[key].filter((x) => x !== item);
+      row.innerHTML = `
+        <span>${escapeHtml(item)}</span>
+        <span class="manage-actions">
+          <button class="btn secondary small-btn edit-option" type="button">수정</button>
+          <button class="btn danger small-btn delete-option" type="button">삭제</button>
+        </span>
+      `;
+
+      row.querySelector(".edit-option").addEventListener("click", () => {
+        editOptionItem(key, index);
+      });
+
+      row.querySelector(".delete-option").addEventListener("click", () => {
+        options[key] = options[key].filter((_, itemIndex) => itemIndex !== index);
+
+        if (key === "emotions") selectedEmotions = selectedEmotions.filter((selected) => selected !== item);
+        if (key === "values") selectedValues = selectedValues.filter((selected) => selected !== item);
+        if (key === "reasons" && selectedReason === item) selectedReason = "";
+        if (key === "sensations" && selectedSensation === item) selectedSensation = "";
+
         saveOptions();
         renderAll();
+        showToast("항목을 삭제했습니다");
       });
+
       container.appendChild(row);
     });
   }
@@ -736,12 +815,25 @@
     options.presets.forEach((preset, index) => {
       const row = document.createElement("div");
       row.className = "manage-row";
-      row.innerHTML = `<span>${escapeHtml(preset.action)} · ${escapeHtml((preset.values || []).join(", "))}</span><button class="btn danger small-btn" type="button">삭제</button>`;
-      row.querySelector("button").addEventListener("click", () => {
+      row.innerHTML = `
+        <span>${escapeHtml(preset.action)}</span>
+        <span class="manage-actions">
+          <button class="btn secondary small-btn edit-preset" type="button">수정</button>
+          <button class="btn danger small-btn delete-preset" type="button">삭제</button>
+        </span>
+      `;
+
+      row.querySelector(".edit-preset").addEventListener("click", () => {
+        editPresetItem(index);
+      });
+
+      row.querySelector(".delete-preset").addEventListener("click", () => {
         options.presets.splice(index, 1);
         saveOptions();
         renderAll();
+        showToast("프리셋을 삭제했습니다");
       });
+
       container.appendChild(row);
     });
   }
@@ -758,15 +850,12 @@
 
   function addPreset() {
     const action = $("newPresetActionInput").value.trim();
-    const value = $("newPresetValueInput").value.trim();
     if (!action) {
       showToast("행동명을 입력해주세요");
       return;
     }
-    options.presets.push({ action, values: value ? [value] : [] });
-    if (value && !options.values.includes(value)) options.values.push(value);
+    options.presets.push({ action });
     $("newPresetActionInput").value = "";
-    $("newPresetValueInput").value = "";
     saveOptions();
     renderAll();
   }

@@ -1,4 +1,4 @@
-const CACHE_NAME = "minwoo-recovery-pwa-v29-3-single-select-daybar-axis";
+const CACHE_NAME = "minwoo-recovery-pwa-v29-5-action-only-presets";
 const ASSETS = [
   "./",
   "index.html",

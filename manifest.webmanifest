@@ -1,7 +1,7 @@
 {
   "name": "작은 행동 회복 기록",
   "short_name": "회복기록",
-  "description": "감정/가치 단일 선택과 0~24시 하루바 축을 적용한 로컬 회복 기록 PWA",
+  "description": "빠른 시작 프리셋을 행동만 저장하도록 분리한 로컬 회복 기록 PWA",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#f5f8f6",
